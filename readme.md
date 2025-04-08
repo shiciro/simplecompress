@@ -4,7 +4,7 @@
 
 ## **Overview**
 
-**UltimateCompress** is a Python-based tool designed to compress images and videos efficiently. It supports various image and video formats and ensures that the compressed files maintain a balance between quality and size. The tool also provides options to back up original files, handle unpaired files, and resolve file conflicts during the compression process.
+**UltimateCompress** is a Python-based tool designed to compress images and videos efficiently. It supports various image and video formats and ensures that the compressed files maintain a balance between quality and size. The tool also provides options to back up original files, handle unpaired files, and resolve file conflicts during the compression process. It leverages multithreading to process multiple files simultaneously, significantly improving execution speed.
 
 ---
 
@@ -30,8 +30,8 @@
 - **Logging**:
   - Logs all operations, including successes, errors, and conflict resolutions, to a `conversion_log.txt` file.
 
-- **Parallel Processing**:
-  - Uses multithreading to process multiple files simultaneously for faster execution.
+- **Multithreading**:
+  - Processes multiple files simultaneously using Python's `ThreadPoolExecutor` for faster execution.
 
 ---
 
@@ -159,7 +159,7 @@ D:\MyMedia
 
 ## **Configuration**
 
-You can customize the script by modifying the following constants in `compress.py`:
+You can customize the script by modifying the following constants in `config.py`:
 
 - **`WEBP_QUALITY`**: Adjust the quality of WebP compression (default: `'90'`).
 - **`V_CODEC_WEBM`**: Video codec for WebM compression (default: `'libvpx'`).
