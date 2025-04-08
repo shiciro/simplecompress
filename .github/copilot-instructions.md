@@ -1,6 +1,6 @@
 # Copilot Instructions
 
-This project is a web application that allows users to create and manage tasks. The application is built using React and Node.js, and it uses MongoDB as the database.
+This project is a compressing tool that allows users to compress images and videos. The application is built using Python.
 
 ## Coding Standards
 
