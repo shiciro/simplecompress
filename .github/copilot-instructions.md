@@ -14,3 +14,4 @@ This project is a web application that allows users to create and manage tasks. 
 - Use destructuring for objects and arrays.
 - Use template literals for strings that contain variables.
 - Use the latest JavaScript features (ES6+) where possible.
+- Use a comment on the same line for every line describing of what the line do.

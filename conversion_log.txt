@@ -20,3 +20,25 @@ Processed video: D:\UltimateCompress\test\1u8b7i.mp4 -> test_compressed\1u8b7i.w
 Compressed video is smaller, kept compressed: D:\UltimateCompress\test\1u8b7i.mp4
 Moved original video to backup: D:\UltimateCompress\test\1u8b7i.mp4
 --- Script Execution Ended: 2025-04-08 15:57:45 ---
+
+--- Script Execution Started: 2025-04-08 17:05:44 ---
+Processed image: D:\riot\test\106940135_bg.jpg -> D:\riot\test\test_compressed\106940135_bg.webp
+Moved original image to backup: D:\riot\test\106940135_bg.jpg
+Processed image: D:\riot\test\-5064665228771437882_121.jpg -> D:\riot\test\test_compressed\-5064665228771437882_121.webp
+Moved original image to backup: D:\riot\test\-5064665228771437882_121.jpg
+Processed video: D:\riot\test\20240524_000621 - Trim.mp4 -> D:\riot\test\test_compressed\20240524_000621 - Trim.webm
+Compressed video is smaller, kept compressed: D:\riot\test\20240524_000621 - Trim.mp4
+Moved original video to backup: D:\riot\test\20240524_000621 - Trim.mp4
+Processed video: D:\riot\test\542037.mov720.mp4 -> D:\riot\test\test_compressed\542037.mov720.webm
+Compressed video is smaller, kept compressed: D:\riot\test\542037.mov720.mp4
+Moved original video to backup: D:\riot\test\542037.mov720.mp4
+Processed video: D:\riot\test\0f8591234a025589.mp4 -> D:\riot\test\test_compressed\0f8591234a025589.webm
+Compressed video is smaller, kept compressed: D:\riot\test\0f8591234a025589.mp4
+Moved original video to backup: D:\riot\test\0f8591234a025589.mp4
+Processed video: D:\riot\test\5438866b41d14cf39e6320fe3dacee89.mp4 -> D:\riot\test\test_compressed\5438866b41d14cf39e6320fe3dacee89.webm
+Compressed video is smaller, kept compressed: D:\riot\test\5438866b41d14cf39e6320fe3dacee89.mp4
+Moved original video to backup: D:\riot\test\5438866b41d14cf39e6320fe3dacee89.mp4
+Processed video: D:\riot\test\1u8b7i.mp4 -> D:\riot\test\test_compressed\1u8b7i.webm
+Compressed video is smaller, kept compressed: D:\riot\test\1u8b7i.mp4
+Moved original video to backup: D:\riot\test\1u8b7i.mp4
+--- Script Execution Ended: 2025-04-08 17:07:33 ---
