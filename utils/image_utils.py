@@ -52,8 +52,14 @@ def processImage(imagePath, outputFolder, movedFolder):
     try:
       with Image.open(filename) as im:  # Ensure the Image object is properly closed
         userComment = im.info.get('parameters', '')  # Extract metadata
+        prompt = im.info.get('prompt', '')  # Extract 'prompt' metadata
+        workflow = im.info.get('workflow', '')  # Extract 'workflow' metadata
       subprocess.check_call(
-        ['exiftool', '-overwrite_original', f'-UserComment={userComment}', filenameOut],
+        ['exiftool', '-overwrite_original', 
+         f'-UserComment={userComment}', 
+         f'-Prompt={prompt}', 
+         f'-Workflow={workflow}', 
+         filenameOut],
         creationflags=CREATE_NO_WINDOW
       )  # Add metadata to the compressed file
     except Exception as e:
