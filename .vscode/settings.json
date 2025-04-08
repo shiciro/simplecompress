@@ -1,7 +1,7 @@
 {
   "github.copilot.chat.commitMessageGeneration.instructions": [
       {
-        "text": "Be extremely detailed with the file changes and the reason for the change. Use lots of emojis. make a new line for each change and use bullet points. Use the format: \n\n- [change] - [reason] - [emoji]\n\n",
+        "text": "Be extremely detailed with the file changes and the reason for the change. Use lots of emojis.",
       }
     ]
   }

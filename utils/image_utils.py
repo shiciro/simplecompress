@@ -4,6 +4,7 @@ from pathlib import Path
 from PIL import Image
 import subprocess
 from config import WEBP_QUALITY, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW  # Import shared constants
+from datetime import datetime  # Import datetime for timestamps
 
 def handleFileConflict(filePath, outputFolder, movedFolder):
   baseName = os.path.splitext(os.path.basename(filePath))[0]
@@ -42,10 +43,12 @@ def processImage(imagePath, outputFolder, movedFolder):
       creationflags=CREATE_NO_WINDOW
     )
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Processed image: {filename} -> {filenameOut}\n")
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Processed image: {filename} -> {filenameOut}\n")  # Log success
   except subprocess.CalledProcessError as e:
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Error converting image: {filename}: {e}\n")
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Error converting image: {filename}: {e}\n")  # Log error
     return
 
   if imagePath.suffix.lower() == '.png':

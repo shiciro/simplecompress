@@ -111,10 +111,12 @@ def processImage(imagePath, outputFolder, movedFolder):
       creationflags=CREATE_NO_WINDOW
     )  # Convert to WebP
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Processed image: {filename} -> {filenameOut}\n")  # Log success
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Processed image: {filename} -> {filenameOut}\n")  # Log success
   except subprocess.CalledProcessError as e:
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Error converting image: {filename}: {e}\n")  # Log error
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Error converting image: {filename}: {e}\n")  # Log error
     return
 
   if imagePath.suffix.lower() == '.png':  # Check if the file is a PNG
@@ -182,10 +184,12 @@ def processVideo(videoPath, outputFolder, movedFolder):
       creationflags=CREATE_NO_WINDOW
     )  # Convert to WebM
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Processed video: {filename} -> {filenameOut}\n")  # Log success
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Processed video: {filename} -> {filenameOut}\n")  # Log success
   except subprocess.CalledProcessError as e:
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Error compressing video: {filename}: {e}\n")  # Log error
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Error compressing video: {filename}: {e}\n")  # Log error
     return
   
   originalSize = os.path.getsize(filename)  # Get original file size

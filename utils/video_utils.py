@@ -3,6 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from config import CRF_WEBM, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW, DEFAULT_SCALE_WIDTH, DEFAULT_SCALE_HEIGHT, WEBM_BITRATE  # Use absolute import
+from datetime import datetime  # Import datetime for timestamps
 
 V_CODEC_WEBM = 'libvpx'  # Video codec for WebM
 A_CODEC_WEBM = 'libvorbis'  # Audio codec for WebM
@@ -44,7 +45,8 @@ def processVideo(videoPath, outputFolder, movedFolder):
       creationflags=CREATE_NO_WINDOW
     )  # Convert to WebM
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Processed video: {filename} -> {filenameOut}\n")  # Log success
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Processed video: {filename} -> {filenameOut}\n")  # Log success
 
     # Set the modified date of the compressed file to match the original
     try:
@@ -54,7 +56,8 @@ def processVideo(videoPath, outputFolder, movedFolder):
         f.write(f"Error updating timestamps for {filenameOut}: File not found\n")  # Log error
   except subprocess.CalledProcessError as e:
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Error compressing video: {filename}: {e}\n")  # Log error
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Error compressing video: {filename}: {e}\n")  # Log error
     return
   
   originalSize = os.path.getsize(filename)  # Get original file size
