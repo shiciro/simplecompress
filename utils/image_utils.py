@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 from PIL import Image
 import subprocess
-from ..main import WEBP_QUALITY, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW  # Import shared constants
+from config import WEBP_QUALITY, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW  # Import shared constants
 
 def handleFileConflict(filePath, outputFolder, movedFolder):
   baseName = os.path.splitext(os.path.basename(filePath))[0]
