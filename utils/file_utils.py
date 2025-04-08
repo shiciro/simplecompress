@@ -16,14 +16,20 @@ def moveUnpairedFiles(folder1, folder2, outputFolder):
   for file in files1:
     baseName = os.path.splitext(file)[0]  # Get base name
     if baseName in unpairedInFolder1:
-      shutil.move(os.path.join(folder1, file), os.path.join(outputFolder, file))  # Move unpaired file from folder1
+      try:
+        shutil.move(os.path.join(folder1, file), os.path.join(outputFolder, file))  # Move unpaired file from folder1
+      except Exception as e:
+        print(f"Error moving file {file} from {folder1} to {outputFolder}: {e}")
   
   for file in files2:
     baseName = os.path.splitext(file)[0]  # Get base name
     if baseName in unpairedInFolder2:
-      shutil.move(os.path.join(folder2, file), os.path.join(outputFolder, file))  # Move unpaired file from folder2
+      try:
+        shutil.move(os.path.join(folder2, file), os.path.join(outputFolder, file))  # Move unpaired file from folder2
+      except Exception as e:
+        print(f"Error moving file {file} from {folder2} to {outputFolder}: {e}")
 
-  print(f"Unpaired files have been moved to: {outputFolder}")  # Print completion message
+  print(f"Unpaired files have been successfully moved to: {outputFolder}")  # Print completion message
 
 def handleFileConflict(filePath, outputFolder, movedFolder):
   """

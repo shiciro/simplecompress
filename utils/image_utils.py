@@ -33,7 +33,8 @@ def processImage(imagePath, outputFolder, movedFolder):
   filename = str(imagePath)
   filenameOut = os.path.join(outputFolder, f'{imagePath.stem}.webp')
 
-  handleFileConflict(filename, outputFolder, movedFolder)
+  if os.path.exists(filenameOut) or os.path.exists(os.path.join(movedFolder, os.path.basename(filename))):
+    handleFileConflict(filename, outputFolder, movedFolder)
 
   try:
     subprocess.check_call(
@@ -49,17 +50,21 @@ def processImage(imagePath, outputFolder, movedFolder):
 
   if imagePath.suffix.lower() == '.png':
     try:
-      im = Image.open(filename)
-      userComment = im.info.get('parameters', '')
+      with Image.open(filename) as im:  # Ensure the Image object is properly closed
+        userComment = im.info.get('parameters', '')  # Extract metadata
       subprocess.check_call(
         ['exiftool', '-overwrite_original', f'-UserComment={userComment}', filenameOut],
         creationflags=CREATE_NO_WINDOW
-      )
+      )  # Add metadata to the compressed file
     except Exception as e:
       with open(LOG_FILE, 'a') as f:
-        f.write(f"Error processing PNG metadata for {filename}: {e}\n")
+        f.write(f"Error processing PNG metadata for {filename}: {e}\n")  # Log error
   
-  os.utime(filenameOut, (os.path.getmtime(filename), os.path.getmtime(filename)))
+  try:
+    os.utime(filenameOut, (os.path.getmtime(filename), os.path.getmtime(filename)))  # Update timestamps
+  except FileNotFoundError:
+    with open(LOG_FILE, 'a') as f:
+      f.write(f"Error updating timestamps for {filenameOut}: File not found\n")  # Log error
   
   if not os.path.exists(filenameOut):
     with open(LOG_FILE, 'a') as f:

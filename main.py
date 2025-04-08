@@ -40,7 +40,6 @@ def main():
       if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
         executor.submit(lambda p: (
           processImage(Path(p), outputFolder, movedFolder),  # Process the image
-          shutil.move(p, os.path.join(movedFolder, os.path.basename(p))),  # Move the original file
           progressBar.update(1)  # Update the progress bar
         ), filePath)
       elif filePath.lower().endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')):
