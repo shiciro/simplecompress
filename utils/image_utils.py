@@ -54,6 +54,16 @@ def processImage(imagePath, outputFolder, movedFolder):
         userComment = im.info.get('parameters', '')  # Extract metadata
         prompt = im.info.get('prompt', '')  # Extract 'prompt' metadata
         workflow = im.info.get('workflow', '')  # Extract 'workflow' metadata
+
+        # Ensure metadata fields are properly formatted for exiftool
+        userComment = userComment.replace('"', '\\"')  # Escape double quotes
+        prompt = prompt.replace('"', '\\"')  # Escape double quotes
+        workflow = workflow.replace('"', '\\"')  # Escape double quotes
+
+        # Log metadata values for debugging
+        with open(LOG_FILE, 'a') as f:
+          f.write(f"Read metadata for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'\n")
+
       subprocess.check_call(
         ['exiftool', '-overwrite_original', 
          f'-UserComment={userComment}', 
@@ -62,6 +72,9 @@ def processImage(imagePath, outputFolder, movedFolder):
          filenameOut],
         creationflags=CREATE_NO_WINDOW
       )  # Add metadata to the compressed file
+    except subprocess.CalledProcessError as e:
+      with open(LOG_FILE, 'a') as f:
+        f.write(f"Error copying metadata to {filenameOut}: {e}\n")  # Log error
     except Exception as e:
       with open(LOG_FILE, 'a') as f:
         f.write(f"Error processing PNG metadata for {filename}: {e}\n")  # Log error
