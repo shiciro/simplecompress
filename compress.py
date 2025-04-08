@@ -6,8 +6,10 @@ from pathlib import Path  # Import Path for path manipulations
 from PIL import Image  # Import Image for image processing
 from concurrent.futures import ThreadPoolExecutor  # Import ThreadPoolExecutor for parallel processing
 from datetime import datetime  # Import datetime for timestamps
+from tqdm import tqdm  # Import tqdm for progress bar visualization
 
 # Constants
+HIDE_CMD_WINDOWS = False  # Toggle to hide or show command prompt windows
 WEBP_QUALITY = '90'  # Quality for WebP compression
 V_CODEC_WEBM = 'libvpx'  # Video codec for WebM
 A_CODEC_WEBM = 'libvorbis'  # Audio codec for WebM
@@ -16,7 +18,7 @@ DELETE_ORIGINALS = True  # Flag to delete original files after processing
 LOG_FILE = 'conversion_log.txt'  # Log file for recording operations
 
 # Add CREATE_NO_WINDOW for Windows
-CREATE_NO_WINDOW = 0x08000000 if sys.platform.startswith('win') else 0  # Prevents cmd window pop-ups on Windows
+CREATE_NO_WINDOW = 0x08000000 if HIDE_CMD_WINDOWS and sys.platform.startswith('win') else 0  # Adjust based on toggle
 
 def clearConsole():
   if sys.platform.startswith('win'):  # Check if the platform is Windows
@@ -63,9 +65,36 @@ def moveUnpairedFiles(folder1, folder2, outputFolder):
 
   print(f"Unpaired files have been moved to: {outputFolder}")  # Print completion message
 
+def handleFileConflict(filePath, outputFolder, movedFolder):
+  """
+  Handle file name conflicts by moving conflicting files to a new folder with a '_conflict' suffix.
+  :param filePath: Path of the input file.
+  :param outputFolder: Path of the output folder.
+  :param movedFolder: Path of the originals backup folder.
+  """
+  baseName = os.path.splitext(os.path.basename(filePath))[0]  # Get base name of the file
+  conflictFolder = os.path.join(outputFolder, f'{baseName}_conflict')  # Create conflict folder path
+  os.makedirs(conflictFolder, exist_ok=True)  # Ensure the conflict folder exists
+
+  # Check and move conflicting files from outputFolder
+  outputFile = os.path.join(outputFolder, f'{baseName}.webp')
+  if os.path.exists(outputFile):
+    shutil.move(outputFile, os.path.join(conflictFolder, os.path.basename(outputFile)))  # Move conflicting output file
+
+  # Check and move conflicting files from movedFolder
+  originalFile = os.path.join(movedFolder, os.path.basename(filePath))
+  if os.path.exists(originalFile):
+    shutil.move(originalFile, os.path.join(conflictFolder, os.path.basename(originalFile)))  # Move conflicting original file
+
+  print(f'Conflicting files moved to: {conflictFolder}')  # Print conflict resolution message
+
 def processImage(imagePath, outputFolder, movedFolder):
   filename = str(imagePath)  # Convert Path object to string
   filenameOut = os.path.join(outputFolder, f'{imagePath.stem}.webp')  # Output file path
+
+  # Check for conflicts before processing
+  handleFileConflict(filename, outputFolder, movedFolder)
+
   try:
     subprocess.check_call(
       ['cwebp', '-q', WEBP_QUALITY, filename, '-o', filenameOut],
@@ -115,7 +144,10 @@ def processImage(imagePath, outputFolder, movedFolder):
 def processVideo(videoPath, outputFolder, movedFolder):
   filename = str(videoPath)  # Convert Path object to string
   filenameOut = os.path.join(outputFolder, f'{videoPath.stem}.webm')  # Output file path
-  
+
+  # Check for conflicts before processing
+  handleFileConflict(filename, outputFolder, movedFolder)
+
   width, height = getVideoDimensions(filename)  # Get video dimensions
   if width is None or height is None:
     with open(LOG_FILE, 'a') as f:
@@ -158,6 +190,15 @@ def processVideo(videoPath, outputFolder, movedFolder):
     with open(LOG_FILE, 'a') as f:
       f.write(f"Moved original video to backup: {filename}\n")  # Log move
 
+def updateProgressBar(total, description):
+  """
+  Create and return a tqdm progress bar instance.
+  :param total: Total number of items to process.
+  :param description: Description for the progress bar.
+  :return: tqdm progress bar instance.
+  """
+  return tqdm(total=total, desc=description, bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]')
+
 def main():
   clearConsole()  # Clear the console
   inputPath = input('Enter the directory path: ')  # Get input directory path
@@ -178,12 +219,17 @@ def main():
   
   files = [os.path.join(inputPath, file) for file in os.listdir(inputPath) if os.path.isfile(os.path.join(inputPath, file))]  # Get list of files
   
+  totalFiles = len(files)  # Total number of files to process
+  progressBar = updateProgressBar(totalFiles, 'Processing Files')  # Initialize progress bar
+  
   with ThreadPoolExecutor() as executor:  # Use ThreadPoolExecutor for parallel processing
     for filePath in files:
       if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):  # Check for image files
-        executor.submit(processImage, Path(filePath), outputFolder, movedFolder)  # Process image
+        executor.submit(lambda p: (processImage(Path(p), outputFolder, movedFolder), progressBar.update(1)), filePath)  # Process image and update progress
       elif filePath.lower().endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')):  # Check for video files
-        executor.submit(processVideo, Path(filePath), outputFolder, movedFolder)  # Process video
+        executor.submit(lambda p: (processVideo(Path(p), outputFolder, movedFolder), progressBar.update(1)), filePath)  # Process video and update progress
+  
+  progressBar.close()  # Close the progress bar after processing
   
   moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)  # Move unpaired files
   

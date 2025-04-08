@@ -192,4 +192,3 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ---
 
-This README provides a beginner-friendly guide to using the `UltimateCompress` tool. If you have any questions or need further assistance, feel free to reach out!
