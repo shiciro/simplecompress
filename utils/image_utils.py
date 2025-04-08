@@ -3,11 +3,7 @@ import shutil
 from pathlib import Path
 from PIL import Image
 import subprocess
-
-WEBP_QUALITY = '90'
-CREATE_NO_WINDOW = 0x08000000
-LOG_FILE = 'conversion_log.txt'
-MOVE_ORIGINALS_TO_BACKUP = True  # Flag to move original files to a backup folder after processing
+from ..main import WEBP_QUALITY, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW  # Import shared constants
 
 def handleFileConflict(filePath, outputFolder, movedFolder):
   baseName = os.path.splitext(os.path.basename(filePath))[0]

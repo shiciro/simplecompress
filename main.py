@@ -12,15 +12,15 @@ from utils.image_utils import processImage
 from utils.file_utils import moveUnpairedFiles
 from utils.progress_utils import updateProgressBar
 
-# Constants
-HIDE_CMD_WINDOWS = False
-WEBP_QUALITY = '90'
-V_CODEC_WEBM = 'libvpx'
-A_CODEC_WEBM = 'libvorbis'
-CRF_WEBM = '47'
+# Constants shared across the application
+CRF_WEBM = '47'  # Constant Rate Factor for WebM
+WEBP_QUALITY = '90'  # Quality for WebP compression
+HIDE_CMD_WINDOWS = False  # Toggle to hide or show command prompt windows
 MOVE_ORIGINALS_TO_BACKUP = True  # Flag to move original files to a backup folder after processing
-LOG_FILE = 'conversion_log.txt'
-CREATE_NO_WINDOW = 0x08000000 if HIDE_CMD_WINDOWS and sys.platform.startswith('win') else 0
+LOG_FILE = 'conversion_log.txt'  # Log file for recording operations
+
+# Adjust creation flags based on the operating system and toggle
+CREATE_NO_WINDOW = 0x08000000 if HIDE_CMD_WINDOWS and os.name == 'nt' else 0
 
 def main():
   clearConsole()

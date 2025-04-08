@@ -2,15 +2,10 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from ..main import CRF_WEBM, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW  # Import shared constants
 
-HIDE_CMD_WINDOWS = False  # Toggle to hide or show command prompt windows
 V_CODEC_WEBM = 'libvpx'  # Video codec for WebM
 A_CODEC_WEBM = 'libvorbis'  # Audio codec for WebM
-CRF_WEBM = '47'  # Constant Rate Factor for WebM
-MOVE_ORIGINALS_TO_BACKUP = True  # Flag to move original files to a backup folder after processing
-LOG_FILE = 'conversion_log.txt'  # Log file for recording operations
-
-CREATE_NO_WINDOW = 0x08000000 if HIDE_CMD_WINDOWS and os.name == 'nt' else 0  # Adjust based on toggle
 
 def getVideoDimensions(videoPath):
   try:
@@ -42,7 +37,7 @@ def processVideo(videoPath, outputFolder, movedFolder):
   try:
     subprocess.check_call(
       [
-        'ffmpeg', '-y', '-i', filename, '-vf', f'scale={scale}',  # Added -y flag to overwrite files
+        'ffmpeg', '-y', '-i', filename, '-vf', f'scale={scale}',
         '-c:v', V_CODEC_WEBM, '-crf', CRF_WEBM, '-b:v', '1M', '-c:a', A_CODEC_WEBM,
         filenameOut
       ],
