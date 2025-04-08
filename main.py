@@ -57,4 +57,5 @@ def main():
     f.write(f"--- Script Execution Ended: {timestamp} ---\n")
 
 if __name__ == '__main__':
+
   main()

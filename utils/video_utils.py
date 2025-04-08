@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from config import CRF_WEBM, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW  # Use absolute import
+from config import CRF_WEBM, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW, DEFAULT_SCALE_WIDTH, DEFAULT_SCALE_HEIGHT, WEBM_BITRATE  # Use absolute import
 
 V_CODEC_WEBM = 'libvpx'  # Video codec for WebM
 A_CODEC_WEBM = 'libvorbis'  # Audio codec for WebM
@@ -32,19 +32,22 @@ def processVideo(videoPath, outputFolder, movedFolder):
       f.write(f"Error getting dimensions for video: {filename}\n")  # Log error
     return
   
-  scale = f"640:-2" if width > height else f"-2:640"  # Determine scale parameters
+  scale = f'{DEFAULT_SCALE_WIDTH}:-2' if width > height else f'-2:{DEFAULT_SCALE_HEIGHT}'  # Determine scale parameters
   
   try:
     subprocess.check_call(
       [
         'ffmpeg', '-y', '-i', filename, '-vf', f'scale={scale}',
-        '-c:v', V_CODEC_WEBM, '-crf', CRF_WEBM, '-b:v', '1M', '-c:a', A_CODEC_WEBM,
+        '-c:v', V_CODEC_WEBM, '-crf', CRF_WEBM, '-b:v', WEBM_BITRATE, '-c:a', A_CODEC_WEBM,
         filenameOut
       ],
       creationflags=CREATE_NO_WINDOW
     )  # Convert to WebM
     with open(LOG_FILE, 'a') as f:
       f.write(f"Processed video: {filename} -> {filenameOut}\n")  # Log success
+
+    # Set the modified date of the compressed file to match the original
+    os.utime(filenameOut, (os.path.getatime(filename), os.path.getmtime(filename)))  # Update timestamps
   except subprocess.CalledProcessError as e:
     with open(LOG_FILE, 'a') as f:
       f.write(f"Error compressing video: {filename}: {e}\n")  # Log error
