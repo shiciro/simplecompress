@@ -14,7 +14,7 @@ WEBP_QUALITY = '90'  # Quality for WebP compression
 V_CODEC_WEBM = 'libvpx'  # Video codec for WebM
 A_CODEC_WEBM = 'libvorbis'  # Audio codec for WebM
 CRF_WEBM = '47'  # Constant Rate Factor for WebM
-DELETE_ORIGINALS = True  # Flag to delete original files after processing
+MOVE_ORIGINALS_TO_BACKUP = True  # Flag to move original files to a backup folder after processing
 LOG_FILE = 'conversion_log.txt'  # Log file for recording operations
 
 # Add CREATE_NO_WINDOW for Windows
@@ -74,19 +74,29 @@ def handleFileConflict(filePath, outputFolder, movedFolder):
   """
   baseName = os.path.splitext(os.path.basename(filePath))[0]  # Get base name of the file
   conflictFolder = os.path.join(outputFolder, f'{baseName}_conflict')  # Create conflict folder path
-  os.makedirs(conflictFolder, exist_ok=True)  # Ensure the conflict folder exists
+
+  conflictDetected = False  # Track if a conflict is detected
 
   # Check and move conflicting files from outputFolder
   outputFile = os.path.join(outputFolder, f'{baseName}.webp')
   if os.path.exists(outputFile):
+    os.makedirs(conflictFolder, exist_ok=True)  # Ensure the conflict folder exists
     shutil.move(outputFile, os.path.join(conflictFolder, os.path.basename(outputFile)))  # Move conflicting output file
+    conflictDetected = True
 
   # Check and move conflicting files from movedFolder
   originalFile = os.path.join(movedFolder, os.path.basename(filePath))
   if os.path.exists(originalFile):
+    os.makedirs(conflictFolder, exist_ok=True)  # Ensure the conflict folder exists
     shutil.move(originalFile, os.path.join(conflictFolder, os.path.basename(originalFile)))  # Move conflicting original file
+    conflictDetected = True
 
-  print(f'Conflicting files moved to: {conflictFolder}')  # Print conflict resolution message
+  # Remove the conflict folder if no conflicts were detected
+  if not conflictDetected and os.path.exists(conflictFolder):
+    os.rmdir(conflictFolder)  # Remove the empty conflict folder
+
+  if conflictDetected:
+    print(f'Conflicting files moved to: {conflictFolder}')  # Print conflict resolution message
 
 def processImage(imagePath, outputFolder, movedFolder):
   filename = str(imagePath)  # Convert Path object to string
@@ -106,7 +116,7 @@ def processImage(imagePath, outputFolder, movedFolder):
     with open(LOG_FILE, 'a') as f:
       f.write(f"Error converting image: {filename}: {e}\n")  # Log error
     return
-  
+
   if imagePath.suffix.lower() == '.png':  # Check if the file is a PNG
     try:
       im = Image.open(filename)  # Open the image
@@ -125,21 +135,27 @@ def processImage(imagePath, outputFolder, movedFolder):
     with open(LOG_FILE, 'a') as f:
       f.write(f"Failed to create compressed file for: {filename}\n")  # Log failure
     return
-  
+
+  # Compare sizes and decide whether to keep the compressed file
   originalSize = os.path.getsize(filename)  # Get original file size
   compressedSize = os.path.getsize(filenameOut)  # Get compressed file size
-  
-  if originalSize < compressedSize:  # Check if the original is smaller
+
+  if compressedSize >= originalSize:  # If compressed file is larger
+    os.remove(filenameOut)  # Delete the compressed file
     shutil.copy2(filename, filenameOut)  # Copy original to output folder
-    os.remove(filenameOut)  # Remove the larger compressed file
     with open(LOG_FILE, 'a') as f:
       f.write(f"Compressed file larger than original, kept original: {filename}\n")  # Log decision
 
-  if DELETE_ORIGINALS:  # Check if originals should be deleted
-    os.makedirs(movedFolder, exist_ok=True)  # Ensure the backup folder exists
-    shutil.move(filename, movedFolder)  # Move original to backup folder
-    with open(LOG_FILE, 'a') as f:
-      f.write(f"Moved original image to backup: {filename}\n")  # Log move
+  # Move original file to backup folder if MOVE_ORIGINALS_TO_BACKUP is True
+  if MOVE_ORIGINALS_TO_BACKUP:
+    try:
+      os.makedirs(movedFolder, exist_ok=True)  # Ensure the backup folder exists
+      shutil.move(filename, os.path.join(movedFolder, os.path.basename(filename)))  # Move original to backup folder
+      with open(LOG_FILE, 'a') as f:
+        f.write(f"Moved original image to backup: {filename}\n")  # Log move
+    except Exception as e:
+      with open(LOG_FILE, 'a') as f:
+        f.write(f"Error moving original image to backup: {filename}: {e}\n")  # Log error
 
 def processVideo(videoPath, outputFolder, movedFolder):
   filename = str(videoPath)  # Convert Path object to string
@@ -159,7 +175,7 @@ def processVideo(videoPath, outputFolder, movedFolder):
   try:
     subprocess.check_call(
       [
-        'ffmpeg', '-i', filename, '-vf', f'scale={scale}',
+        'ffmpeg', '-y', '-i', filename, '-vf', f'scale={scale}',  # Added -y flag to overwrite files
         '-c:v', V_CODEC_WEBM, '-crf', CRF_WEBM, '-b:v', '1M', '-c:a', A_CODEC_WEBM,
         filenameOut
       ],
@@ -184,7 +200,7 @@ def processVideo(videoPath, outputFolder, movedFolder):
     with open(LOG_FILE, 'a') as f:
       f.write(f"Compressed video is smaller, kept compressed: {filename}\n")  # Log decision
 
-  if DELETE_ORIGINALS:  # Check if originals should be deleted
+  if MOVE_ORIGINALS_TO_BACKUP:  # Check if originals should be moved
     os.makedirs(movedFolder, exist_ok=True)  # Ensure the backup folder exists
     shutil.move(filename, movedFolder)  # Move original to backup folder
     with open(LOG_FILE, 'a') as f:

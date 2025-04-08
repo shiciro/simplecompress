@@ -4,7 +4,7 @@
 
 ## **Overview**
 
-**UltimateCompress** is a Python-based tool designed to compress images and videos efficiently. It supports various image and video formats and ensures that the compressed files maintain a balance between quality and size. The tool also provides options to back up original files and handle unpaired files during the compression process.
+**UltimateCompress** is a Python-based tool designed to compress images and videos efficiently. It supports various image and video formats and ensures that the compressed files maintain a balance between quality and size. The tool also provides options to back up original files, handle unpaired files, and resolve file conflicts during the compression process.
 
 ---
 
@@ -24,8 +24,11 @@
   - Moves original files to a backup folder after compression (optional).
   - Handles unpaired files by moving them to a separate folder.
 
+- **Conflict Resolution**:
+  - Detects and resolves file name conflicts by moving conflicting files to a dedicated `_conflict` folder.
+
 - **Logging**:
-  - Logs all operations, including successes and errors, to a conversion_log.txt file.
+  - Logs all operations, including successes, errors, and conflict resolutions, to a `conversion_log.txt` file.
 
 - **Parallel Processing**:
   - Uses multithreading to process multiple files simultaneously for faster execution.
@@ -92,9 +95,10 @@ Before running the script, ensure you have the following installed:
    - `<input_folder>_compressed`: Contains the compressed files.
    - `<input_folder>_originals_backup`: Contains the original files (if deletion is enabled).
    - `<input_folder>_unpaired`: Contains unpaired files that could not be processed.
+   - `<input_folder>_conflict`: Contains conflicting files that were moved during processing.
 
 4. **Check the Log File**:
-   After the script completes, review the conversion_log.txt file for details about the operations performed.
+   After the script completes, review the `conversion_log.txt` file for details about the operations performed, including any errors or conflicts.
 
 ---
 
@@ -111,8 +115,14 @@ Before running the script, ensure you have the following installed:
    - If the compressed file is larger than the original, the original file is retained.
 
 3. **Backup and Cleanup**:
-   - Original files are moved to a backup folder if the `DELETE_ORIGINALS` flag is enabled.
+   - Original files are moved to a backup folder if the `MOVE_ORIGINALS_TO_BACKUP` flag is enabled.
    - Unpaired files (files without matching counterparts in the output folder) are moved to a separate folder.
+
+4. **Conflict Resolution**:
+   - If a file with the same name already exists in the output or backup folder, the conflicting file is moved to a `_conflict` folder to avoid overwriting.
+
+5. **Logging**:
+   - All operations, including successes, errors, and conflict resolutions, are logged in the `conversion_log.txt` file for easy troubleshooting.
 
 ---
 
@@ -141,6 +151,7 @@ D:\MyMedia
 │   ├── video1.mp4
 │   ├── video2.mov
 ├── MyMedia_unpaired
+├── MyMedia_conflict
 ├── conversion_log.txt
 ```
 
@@ -148,13 +159,13 @@ D:\MyMedia
 
 ## **Configuration**
 
-You can customize the script by modifying the following constants in compress.py:
+You can customize the script by modifying the following constants in `compress.py`:
 
 - **`WEBP_QUALITY`**: Adjust the quality of WebP compression (default: `'90'`).
 - **`V_CODEC_WEBM`**: Video codec for WebM compression (default: `'libvpx'`).
 - **`A_CODEC_WEBM`**: Audio codec for WebM compression (default: `'libvorbis'`).
 - **`CRF_WEBM`**: Constant Rate Factor for WebM compression (default: `'47'`).
-- **`DELETE_ORIGINALS`**: Set to `True` to move original files to a backup folder after compression.
+- **`MOVE_ORIGINALS_TO_BACKUP`**: Set to `True` to move original files to a backup folder after compression.
 
 ---
 
@@ -167,7 +178,10 @@ You can customize the script by modifying the following constants in compress.py
    - Ensure you have read/write permissions for the input and output directories.
 
 3. **File Not Compressed**:
-   - Check the conversion_log.txt file for error messages.
+   - Check the `conversion_log.txt` file for error messages.
+
+4. **File Conflicts**:
+   - Conflicting files are moved to a `_conflict` folder. Check this folder for details.
 
 ---
 
