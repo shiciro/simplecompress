@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
@@ -46,9 +47,16 @@ def main():
   with ThreadPoolExecutor() as executor:
     for filePath in files:
       if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-        executor.submit(lambda p: (processImage(Path(p), outputFolder, movedFolder), progressBar.update(1)), filePath)
+        executor.submit(lambda p: (
+          processImage(Path(p), outputFolder, movedFolder),  # Process the image
+          shutil.move(p, os.path.join(movedFolder, os.path.basename(p))),  # Move the original file
+          progressBar.update(1)  # Update the progress bar
+        ), filePath)
       elif filePath.lower().endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')):
-        executor.submit(lambda p: (processVideo(Path(p), outputFolder, movedFolder), progressBar.update(1)), filePath)
+        executor.submit(lambda p: (
+          processVideo(Path(p), outputFolder, movedFolder),  # Process the video
+          progressBar.update(1)  # Update the progress bar
+        ), filePath)
   
   progressBar.close()
   moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)
