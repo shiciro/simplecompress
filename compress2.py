@@ -166,9 +166,12 @@ def main():
   clearConsole()
   inputPath = input('Enter the directory path: ')
   inputFolderName = os.path.basename(os.path.normpath(inputPath))
-  outputFolder = f'{inputFolderName}_compressed'
-  movedFolder = f'{inputFolderName}_originals_backup'
-  unpairedFolder = f'{inputFolderName}_unpaired'
+  
+  # Create output folders in the same directory as the input folder
+  outputFolder = os.path.join(inputPath, f'{inputFolderName}_compressed')
+  movedFolder = os.path.join(inputPath, f'{inputFolderName}_originals_backup')
+  unpairedFolder = os.path.join(inputPath, f'{inputFolderName}_unpaired')
+  
   os.makedirs(outputFolder, exist_ok=True)
   os.makedirs(movedFolder, exist_ok=True)
   os.makedirs(unpairedFolder, exist_ok=True)
