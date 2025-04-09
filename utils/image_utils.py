@@ -28,7 +28,8 @@ def handleFileConflict(filePath, outputFolder, movedFolder):
     os.rmdir(conflictFolder)
 
   if conflictDetected:
-    print(f'Conflicting files moved to: {conflictFolder}')
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+    print(f"[{timestamp}] Conflicting files moved to: {conflictFolder}")  # Print conflict resolution message
 
 def processImage(imagePath, outputFolder, movedFolder):
   filename = str(imagePath)
@@ -86,7 +87,8 @@ def processImage(imagePath, outputFolder, movedFolder):
     os.utime(filenameOut, (os.path.getmtime(filename), os.path.getmtime(filename)))  # Update timestamps
   except FileNotFoundError:
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Error updating timestamps for {filenameOut}: File not found\n")  # Log error
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Error updating timestamps for {filenameOut}: File not found\n")  # Log error
   
   if not os.path.exists(filenameOut):
     with open(LOG_FILE, 'a') as f:
@@ -100,14 +102,17 @@ def processImage(imagePath, outputFolder, movedFolder):
     os.remove(filenameOut)
     shutil.copy2(filename, filenameOut)
     with open(LOG_FILE, 'a') as f:
-      f.write(f"Compressed file larger than original, kept original: {filename}\n")
+      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+      f.write(f"[{timestamp}] Compressed file larger than original, kept original: {filename}\n")
 
   if MOVE_ORIGINALS_TO_BACKUP:
     try:
       os.makedirs(movedFolder, exist_ok=True)
       shutil.move(filename, os.path.join(movedFolder, os.path.basename(filename)))
       with open(LOG_FILE, 'a') as f:
-        f.write(f"Moved original image to backup: {filename}\n")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+        f.write(f"[{timestamp}] Moved original image to backup: {filename}\n")
     except Exception as e:
       with open(LOG_FILE, 'a') as f:
-        f.write(f"Error moving original image to backup: {filename}: {e}\n")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+        f.write(f"[{timestamp}] Error moving original image to backup: {filename}: {e}\n")

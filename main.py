@@ -28,8 +28,8 @@ def main():
   os.makedirs(unpairedFolder, exist_ok=True)
   
   with open(LOG_FILE, 'a') as f:
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    f.write(f"\n--- Script Execution Started: {timestamp} ---\n")
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+    f.write(f"[{timestamp}] --- Script Execution Started ---\n")  # Log start time
   
   files = [os.path.join(inputPath, file) for file in os.listdir(inputPath) if os.path.isfile(os.path.join(inputPath, file))]
   
@@ -61,8 +61,8 @@ def main():
   moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)
   
   with open(LOG_FILE, 'a') as f:
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    f.write(f"--- Script Execution Ended: {timestamp} ---\n")
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+    f.write(f"[{timestamp}] --- Script Execution Ended ---\n")  # Log end time
 
 if __name__ == '__main__':
 
