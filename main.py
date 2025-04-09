@@ -40,6 +40,25 @@ def keyListener():
     if isCancelled:
       break
 
+def logConstants():
+  constants = {
+    'CRF_WEBM': CRF_WEBM,
+    'WEBP_QUALITY': WEBP_QUALITY,
+    'HIDE_CMD_WINDOWS': HIDE_CMD_WINDOWS,
+    'MOVE_ORIGINALS_TO_BACKUP': MOVE_ORIGINALS_TO_BACKUP,
+    'LOG_FILE': LOG_FILE,
+    'CREATE_NO_WINDOW': CREATE_NO_WINDOW,
+    'USE_THREAD_POOL_FOR_IMAGES': USE_THREAD_POOL_FOR_IMAGES,
+    'USE_THREAD_POOL_FOR_VIDEOS': USE_THREAD_POOL_FOR_VIDEOS
+  }  # Define constants to log
+
+  print('\nCurrent Constants:')
+  with open(LOG_FILE, 'a') as f:
+    f.write('\nCurrent Constants:\n')
+    for key, value in constants.items():
+      print(f'{key}: {value}')  # Print constant name and value
+      f.write(f'{key}: {value}\n')  # Log constant name and value
+
 def main():
   global isPaused, isCancelled
   clearConsole()
@@ -58,6 +77,8 @@ def main():
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
     f.write(f"[{timestamp}] --- Script Execution Started ---\n")  # Log start time
   
+  logConstants()  # Log and print constants at the start of the script
+
   files = [os.path.join(inputPath, file) for file in os.listdir(inputPath) if os.path.isfile(os.path.join(inputPath, file))]
   
   totalFiles = len(files)
