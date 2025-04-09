@@ -16,33 +16,11 @@ from utils.file_utils import moveUnpairedFiles
 from utils.progress_utils import updateProgressBar
 from config import CRF_WEBM, WEBP_QUALITY, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW
 from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS  # Import new constants
+from utils.dependency_utils import checkDependencies  # Import the moved function
 
 # Global flags for pause and cancel
 isPaused = False
 isCancelled = False
-
-def checkDependencies():
-  dependencies = {
-    'keyboard': 'pip install keyboard',
-    'tqdm': 'pip install tqdm',
-    'Pillow': 'pip install Pillow',
-    'ffmpeg': 'Refer to https://ffmpeg.org/download.html for installation',
-    'exiftool': 'Refer to https://exiftool.org/ for installation'
-  }  # Define required dependencies and their installation instructions
-
-  missing = []
-  for module, installCmd in dependencies.items():
-    try:
-      importlib.import_module(module)  # Try importing the module
-    except ImportError:
-      missing.append((module, installCmd))  # Add missing module and installation command
-
-  if missing:
-    print('\nThe following dependencies are missing:')
-    for module, installCmd in missing:
-      print(f'- {module}: {installCmd}')  # Print missing module and how to install it
-    print('\nPlease install the missing dependencies and restart the script.')
-    sys.exit(1)  # Exit the script if dependencies are missing
 
 def keyListener():
   global isPaused, isCancelled
