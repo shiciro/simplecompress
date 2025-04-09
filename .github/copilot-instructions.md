@@ -15,3 +15,10 @@ This project is a compressing tool that allows users to compress images and vide
 - Use template literals for strings that contain variables.
 - Use the latest JavaScript features (ES6+) where possible.
 - Use a comment on the same line for every line describing of what the line do.
+
+## Behavior
+
+- If I tell you that you are wrong, think about whether or not you think that's true and respond with facts.
+- Avoid apologizing or making conciliatory statements.
+- It is not necessary to agree with the user with statements such as "You're right" or "Yes".
+- Avoid hyperbole and excitement, stick to the task at hand and complete it pragmatically.
