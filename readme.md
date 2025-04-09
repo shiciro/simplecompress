@@ -4,7 +4,7 @@
 
 ## **Overview**
 
-**UltimateCompress** is a Python-based tool designed to compress images and videos efficiently. It supports various image and video formats and ensures that the compressed files maintain a balance between quality and size. The tool also provides options to back up original files, handle unpaired files, and resolve file conflicts during the compression process. It leverages multithreading to process multiple files simultaneously, significantly improving execution speed.
+**UltimateCompress** is a Python-based tool designed to compress images and videos efficiently. It supports various image and video formats and ensures that the compressed files maintain a balance between quality and size. The tool also provides options to back up original files, handle unpaired files, resolve file conflicts during the compression process, and toggle multithreading for image and video processing.
 
 ---
 
@@ -32,6 +32,7 @@
 
 - **Multithreading**:
   - Processes multiple files simultaneously using Python's `ThreadPoolExecutor` for faster execution.
+  - Configurable toggles to enable or disable multithreading for image and video processing.
 
 ---
 
@@ -159,13 +160,16 @@ D:\MyMedia
 
 ## **Configuration**
 
-You can customize the script by modifying the following constants in `config.py`:
+The script can be customized by modifying the constants in the `config.py` file:
 
-- **`WEBP_QUALITY`**: Adjust the quality of WebP compression (default: `'90'`).
-- **`V_CODEC_WEBM`**: Video codec for WebM compression (default: `'libvpx'`).
-- **`A_CODEC_WEBM`**: Audio codec for WebM compression (default: `'libvorbis'`).
-- **`CRF_WEBM`**: Constant Rate Factor for WebM compression (default: `'47'`).
-- **`MOVE_ORIGINALS_TO_BACKUP`**: Set to `True` to move original files to a backup folder after compression.
+- **`WEBP_QUALITY`**: Defines the quality of WebP image compression. Higher values result in better quality but larger file sizes. *(Default: `'90'`)*
+- **`V_CODEC_WEBM`**: Specifies the video codec used for WebM compression. *(Default: `'libvpx'`)*
+- **`A_CODEC_WEBM`**: Specifies the audio codec used for WebM compression. *(Default: `'libvorbis'`)*
+- **`CRF_WEBM`**: Sets the Constant Rate Factor for WebM compression, controlling the balance between quality and file size. *(Default: `'47'`)*
+- **`MOVE_ORIGINALS_TO_BACKUP`**: When set to `True`, original files are moved to a backup folder after compression. *(Default: `True`)*
+
+To apply these changes, edit the `config.py` file in the project directory and adjust the values as needed.
+
 
 ---
 

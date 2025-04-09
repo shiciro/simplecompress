@@ -12,6 +12,7 @@ from utils.image_utils import processImage
 from utils.file_utils import moveUnpairedFiles
 from utils.progress_utils import updateProgressBar
 from config import CRF_WEBM, WEBP_QUALITY, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW
+from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS  # Import new constants
 
 def main():
   clearConsole()
@@ -35,18 +36,26 @@ def main():
   totalFiles = len(files)
   progressBar = updateProgressBar(totalFiles, 'Processing Files')
   
-  with ThreadPoolExecutor() as executor:
+  with ThreadPoolExecutor() as executor:  # Use ThreadPoolExecutor for parallel processing
     for filePath in files:
-      if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-        executor.submit(lambda p: (
-          processImage(Path(p), outputFolder, movedFolder),  # Process the image
+      if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):  # Check for image files
+        if USE_THREAD_POOL_FOR_IMAGES:  # Check if threading is enabled for images
+          executor.submit(lambda p: (
+            processImage(Path(p), outputFolder, movedFolder),  # Process the image
+            progressBar.update(1)  # Update the progress bar
+          ), filePath)
+        else:
+          processImage(Path(filePath), outputFolder, movedFolder)  # Process sequentially
           progressBar.update(1)  # Update the progress bar
-        ), filePath)
-      elif filePath.lower().endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')):
-        executor.submit(lambda p: (
-          processVideo(Path(p), outputFolder, movedFolder),  # Process the video
+      elif filePath.lower().endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')):  # Check for video files
+        if USE_THREAD_POOL_FOR_VIDEOS:  # Check if threading is enabled for videos
+          executor.submit(lambda p: (
+            processVideo(Path(p), outputFolder, movedFolder),  # Process the video
+            progressBar.update(1)  # Update the progress bar
+          ), filePath)
+        else:
+          processVideo(Path(filePath), outputFolder, movedFolder)  # Process sequentially
           progressBar.update(1)  # Update the progress bar
-        ), filePath)
   
   progressBar.close()
   moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)
