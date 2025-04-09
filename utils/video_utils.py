@@ -1,12 +1,15 @@
 import os
 import shutil
 import subprocess
+import logging  # Import logging module
 from pathlib import Path
 from config import CRF_WEBM, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW, DEFAULT_SCALE_WIDTH, DEFAULT_SCALE_HEIGHT, WEBM_BITRATE  # Use absolute import
 from datetime import datetime  # Import datetime for timestamps
 
 V_CODEC_WEBM = 'libvpx'  # Video codec for WebM
 A_CODEC_WEBM = 'libvorbis'  # Audio codec for WebM
+
+logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s %(message)s')  # Configure logging
 
 def getVideoDimensions(videoPath):
   try:
@@ -19,9 +22,7 @@ def getVideoDimensions(videoPath):
     if len(dimensions) >= 2:
       return map(int, dimensions[:2])  # Return width and height as integers
   except Exception as e:
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Error getting dimensions for {videoPath}: {e}\n")  # Log error
+    logging.error(f"Error getting dimensions for {videoPath}: {e}")  # Log error
   return None, None  # Return None if dimensions cannot be retrieved
 
 def processVideo(videoPath, outputFolder, movedFolder):
@@ -30,9 +31,7 @@ def processVideo(videoPath, outputFolder, movedFolder):
 
   width, height = getVideoDimensions(filename)  # Get video dimensions
   if width is None or height is None:
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Error getting dimensions for video: {filename}\n")  # Log error
+    logging.error(f"Error getting dimensions for video: {filename}")  # Log error
     return
   
   scale = f'{DEFAULT_SCALE_WIDTH}:-2' if width > height else f'-2:{DEFAULT_SCALE_HEIGHT}'  # Determine scale parameters
@@ -46,21 +45,15 @@ def processVideo(videoPath, outputFolder, movedFolder):
       ],
       creationflags=CREATE_NO_WINDOW
     )  # Convert to WebM
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Processed video: {filename} -> {filenameOut}\n")  # Log success
+    logging.info(f"Processed video: {filename} -> {filenameOut}")  # Log success
 
     # Set the modified date of the compressed file to match the original
     try:
       os.utime(filenameOut, (os.path.getatime(filename), os.path.getmtime(filename)))  # Update timestamps
     except FileNotFoundError:
-      with open(LOG_FILE, 'a') as f:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-        f.write(f"[{timestamp}] Error updating timestamps for {filenameOut}: File not found\n")  # Log error
+      logging.error(f"Error updating timestamps for {filenameOut}: File not found")  # Log error
   except subprocess.CalledProcessError as e:
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Error compressing video: {filename}: {e}\n")  # Log error
+    logging.error(f"Error compressing video: {filename}: {e}")  # Log error
     return
   
   originalSize = os.path.getsize(filename)  # Get original file size
@@ -69,17 +62,11 @@ def processVideo(videoPath, outputFolder, movedFolder):
   if compressedSize >= originalSize:  # Check if the compressed file is larger
     os.remove(filenameOut)  # Delete the compressed file
     shutil.copy(filename, filenameOut)  # Copy original to output folder
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Compressed video larger than original, kept original: {filename}\n")  # Log decision
+    logging.info(f"Compressed video larger than original, kept original: {filename}")  # Log decision
   else:
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Compressed video is smaller, kept compressed: {filename}\n")  # Log decision
+    logging.info(f"Compressed video is smaller, kept compressed: {filename}")  # Log decision
 
   if MOVE_ORIGINALS_TO_BACKUP:  # Check if originals should be moved
     os.makedirs(movedFolder, exist_ok=True)  # Ensure the backup folder exists
     shutil.move(filename, movedFolder)  # Move original to backup folder
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Moved original video to backup: {filename}\n")  # Log move
+    logging.info(f"Moved original video to backup: {filename}")  # Log move

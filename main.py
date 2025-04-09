@@ -8,6 +8,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 import importlib  # Import importlib to check for module availability
+import logging  # Import logging module
 
 from utils.console_utils import clearConsole
 from utils.video_utils import processVideo, getVideoDimensions
@@ -17,6 +18,13 @@ from utils.progress_utils import updateProgressBar
 from config import CRF_WEBM, WEBP_QUALITY, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW
 from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS  # Import new constants
 from utils.dependency_utils import checkDependencies  # Import the moved function
+
+# Configure logging
+logging.basicConfig(
+  filename=LOG_FILE,  # Log file path
+  level=logging.INFO,  # Set default log level to INFO
+  format='%(asctime)s - %(levelname)s - %(message)s'  # Log format with timestamp, level, and message
+)
 
 # Global flags for pause and cancel
 isPaused = False
@@ -53,11 +61,10 @@ def logConstants():
   }  # Define constants to log
 
   print('\nCurrent Constants:')
-  with open(LOG_FILE, 'a') as f:
-    f.write('\nCurrent Constants:\n')
-    for key, value in constants.items():
-      print(f'{key}: {value}')  # Print constant name and value
-      f.write(f'{key}: {value}\n')  # Log constant name and value
+  logging.info('Current Constants:')
+  for key, value in constants.items():
+    print(f'{key}: {value}')  # Print constant name and value
+    logging.info(f'{key}: {value}')  # Log constant name and value
 
 def main():
   global isPaused, isCancelled
@@ -73,9 +80,8 @@ def main():
   os.makedirs(movedFolder, exist_ok=True)
   os.makedirs(unpairedFolder, exist_ok=True)
   
-  with open(LOG_FILE, 'a') as f:
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-    f.write(f"[{timestamp}] --- Script Execution Started ---\n")  # Log start time
+  timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+  logging.info(f"[{timestamp}] --- Script Execution Started ---")  # Log start time
   
   logConstants()  # Log and print constants at the start of the script
 
@@ -95,8 +101,7 @@ def main():
       if isCancelled:  # Stop processing if isCancelled is True
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
         print(f'\n[{timestamp}] Processing cancelled by user.')  # Print with timestamp
-        with open(LOG_FILE, 'a') as f:  # Log to file
-          f.write(f"[{timestamp}] Processing cancelled by user.\n")
+        logging.info(f"[{timestamp}] Processing cancelled by user.")
         break
       if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):  # Check for image files
         if USE_THREAD_POOL_FOR_IMAGES:  # Check if threading is enabled for images
@@ -121,9 +126,8 @@ def main():
   if not isCancelled:
     moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)
   
-  with open(LOG_FILE, 'a') as f:
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-    f.write(f"[{timestamp}] --- Script Execution Ended ---\n")  # Log end time
+  timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
+  logging.info(f"[{timestamp}] --- Script Execution Ended ---")  # Log end time
 
 if __name__ == '__main__':
   checkDependencies()

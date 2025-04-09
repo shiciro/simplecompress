@@ -5,6 +5,10 @@ from PIL import Image
 import subprocess
 from config import WEBP_QUALITY, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW  # Import shared constants
 from datetime import datetime  # Import datetime for timestamps
+import logging  # Import logging module
+
+# Configure logging
+logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s %(message)s')
 
 def handleFileConflict(filePath, outputFolder, movedFolder):
   baseName = os.path.splitext(os.path.basename(filePath))[0]
@@ -28,8 +32,7 @@ def handleFileConflict(filePath, outputFolder, movedFolder):
     os.rmdir(conflictFolder)
 
   if conflictDetected:
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-    print(f"[{timestamp}] Conflicting files moved to: {conflictFolder}")  # Print conflict resolution message
+    logging.info(f"Conflicting files moved to: {conflictFolder}")  # Log conflict resolution message
 
 def processImage(imagePath, outputFolder, movedFolder):
   filename = str(imagePath)
@@ -43,13 +46,9 @@ def processImage(imagePath, outputFolder, movedFolder):
       ['cwebp', '-q', WEBP_QUALITY, filename, '-o', filenameOut],
       creationflags=CREATE_NO_WINDOW
     )
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Processed image: {filename} -> {filenameOut}\n")  # Log success
+    logging.info(f"Processed image: {filename} -> {filenameOut}")  # Log success
   except subprocess.CalledProcessError as e:
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Error converting image: {filename}: {e}\n")  # Log error
+    logging.error(f"Error converting image: {filename}: {e}")  # Log error
     return
 
   if imagePath.suffix.lower() == '.png':
@@ -65,8 +64,7 @@ def processImage(imagePath, outputFolder, movedFolder):
         workflow = workflow.replace('"', '\\"')  # Escape double quotes
 
         # Log metadata values for debugging
-        with open(LOG_FILE, 'a') as f:
-          f.write(f"Read metadata for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'\n")
+        logging.info(f"Read metadata for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'")
 
       subprocess.check_call(
         ['exiftool', '-overwrite_original', 
@@ -77,22 +75,17 @@ def processImage(imagePath, outputFolder, movedFolder):
         creationflags=CREATE_NO_WINDOW
       )  # Add metadata to the compressed file
     except subprocess.CalledProcessError as e:
-      with open(LOG_FILE, 'a') as f:
-        f.write(f"Error copying metadata to {filenameOut}: {e}\n")  # Log error
+      logging.error(f"Error copying metadata to {filenameOut}: {e}")  # Log error
     except Exception as e:
-      with open(LOG_FILE, 'a') as f:
-        f.write(f"Error processing PNG metadata for {filename}: {e}\n")  # Log error
+      logging.error(f"Error processing PNG metadata for {filename}: {e}")  # Log error
   
   try:
     os.utime(filenameOut, (os.path.getmtime(filename), os.path.getmtime(filename)))  # Update timestamps
   except FileNotFoundError:
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Error updating timestamps for {filenameOut}: File not found\n")  # Log error
+    logging.error(f"Error updating timestamps for {filenameOut}: File not found")  # Log error
   
   if not os.path.exists(filenameOut):
-    with open(LOG_FILE, 'a') as f:
-      f.write(f"Failed to create compressed file for: {filename}\n")
+    logging.error(f"Failed to create compressed file for: {filename}")
     return
 
   originalSize = os.path.getsize(filename)
@@ -101,18 +94,12 @@ def processImage(imagePath, outputFolder, movedFolder):
   if compressedSize >= originalSize:
     os.remove(filenameOut)
     shutil.copy2(filename, filenameOut)
-    with open(LOG_FILE, 'a') as f:
-      timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-      f.write(f"[{timestamp}] Compressed file larger than original, kept original: {filename}\n")
+    logging.info(f"Compressed file larger than original, kept original: {filename}")
 
   if MOVE_ORIGINALS_TO_BACKUP:
     try:
       os.makedirs(movedFolder, exist_ok=True)
       shutil.move(filename, os.path.join(movedFolder, os.path.basename(filename)))
-      with open(LOG_FILE, 'a') as f:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-        f.write(f"[{timestamp}] Moved original image to backup: {filename}\n")
+      logging.info(f"Moved original image to backup: {filename}")
     except Exception as e:
-      with open(LOG_FILE, 'a') as f:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-        f.write(f"[{timestamp}] Error moving original image to backup: {filename}: {e}\n")
+      logging.error(f"Error moving original image to backup: {filename}: {e}")

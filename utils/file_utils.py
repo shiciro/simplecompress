@@ -1,6 +1,10 @@
 import os
 import shutil
 from datetime import datetime  # Import datetime for timestamps
+import logging  # Import logging module
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def moveUnpairedFiles(folder1, folder2, outputFolder):
   os.makedirs(outputFolder, exist_ok=True)  # Ensure the output folder exists
@@ -19,25 +23,20 @@ def moveUnpairedFiles(folder1, folder2, outputFolder):
     if baseName in unpairedInFolder1:
       try:
         shutil.move(os.path.join(folder1, file), os.path.join(outputFolder, file))  # Move unpaired file from folder1
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-        print(f"[{timestamp}] Moved unpaired file from {folder1} to {outputFolder}: {file}")  # Log success
+        logging.info(f"Moved unpaired file from {folder1} to {outputFolder}: {file}")  # Log success
       except Exception as e:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-        print(f"[{timestamp}] Error moving file {file} from {folder1} to {outputFolder}: {e}")  # Log error
+        logging.error(f"Error moving file {file} from {folder1} to {outputFolder}: {e}")  # Log error
   
   for file in files2:
     baseName = os.path.splitext(file)[0]  # Get base name
     if baseName in unpairedInFolder2:
       try:
         shutil.move(os.path.join(folder2, file), os.path.join(outputFolder, file))  # Move unpaired file from folder2
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-        print(f"[{timestamp}] Moved unpaired file from {folder2} to {outputFolder}: {file}")  # Log success
+        logging.info(f"Moved unpaired file from {folder2} to {outputFolder}: {file}")  # Log success
       except Exception as e:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-        print(f"[{timestamp}] Error moving file {file} from {folder2} to {outputFolder}: {e}")  # Log error
+        logging.error(f"Error moving file {file} from {folder2} to {outputFolder}: {e}")  # Log error
 
-  timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-  print(f"[{timestamp}] Unpaired files have been successfully moved to: {outputFolder}")  # Print completion message
+  logging.info(f"Unpaired files have been successfully moved to: {outputFolder}")  # Print completion message
 
 def handleFileConflict(filePath, outputFolder, movedFolder):
   """
@@ -70,5 +69,4 @@ def handleFileConflict(filePath, outputFolder, movedFolder):
     os.rmdir(conflictFolder)  # Remove the empty conflict folder
 
   if conflictDetected:
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-    print(f"[{timestamp}] Conflicting files moved to: {conflictFolder}")  # Print conflict resolution message
+    logging.info(f"Conflicting files moved to: {conflictFolder}")  # Print conflict resolution message

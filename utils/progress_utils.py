@@ -1,6 +1,8 @@
+import logging  # Import logging module
 from tqdm import tqdm
 
 def updateProgressBar(total, description):
+  logging.info('Progress bar updated')  # Log progress bar update
   return tqdm(
     total=total,
     desc=description,

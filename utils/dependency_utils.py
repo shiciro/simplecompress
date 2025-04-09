@@ -1,5 +1,6 @@
 import importlib  # Import the importlib module
 import sys  # Import the sys module
+import logging  # Import logging module
 
 def checkDependencies():
   dependencies = {
@@ -23,3 +24,5 @@ def checkDependencies():
       print(f'- {module}: {installCmd}')  # Print missing module and how to install it
     print('\nPlease install the missing dependencies and restart the script.')
     sys.exit(1)  # Exit the script if dependencies are missing
+  else:
+    logging.info('Dependencies checked successfully')  # Log dependency check success
