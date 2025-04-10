@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 from PIL import Image
 import subprocess
-from config import WEBP_QUALITY, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW  # Import shared constants
+from config import WEBP_QUALITY, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW, LOG_METADATA  # Import shared constants
 from datetime import datetime  # Import datetime for timestamps
 import logging  # Import logging module
 
@@ -63,8 +63,9 @@ def processImage(imagePath, outputFolder, movedFolder):
         prompt = prompt.replace('"', '\\"')  # Escape double quotes
         workflow = workflow.replace('"', '\\"')  # Escape double quotes
 
-        # Log metadata values for debugging
-        logging.info(f"Read metadata for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'")
+        # Log metadata values for debugging if enabled
+        if LOG_METADATA:
+          logging.info(f"Read metadata for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'")
 
       subprocess.check_call(
         ['exiftool', '-overwrite_original', 

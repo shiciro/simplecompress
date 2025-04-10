@@ -130,5 +130,5 @@ def main():
   logging.info(f"[{timestamp}] --- Script Execution Ended ---")  # Log end time
 
 if __name__ == '__main__':
-  checkDependencies()
+  #checkDependencies()
   main()
