@@ -1,8 +1,10 @@
 {
   "github.copilot.chat.commitMessageGeneration.instructions": [
       {
-        "text": "Be extremely detailed with the file changes and the reason for the change. Use lots of emojis.",
+        "text": "Be extremely detailed with the file changes and the reason for the change. Use appropiate and contextual emojis.",
       }
-    ]
+    ],
+
   }
+  
   
