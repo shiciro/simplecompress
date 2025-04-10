@@ -17,6 +17,11 @@ def checkDependencies():
     if module in ['ffmpeg', 'exiftool']:  # Check for external executables
       if not shutil.which(module):  # Verify if the executable is in PATH
         missing.append((module, installCmd))  # Add missing executable and installation command
+    elif module == 'Pillow':  # Special case for Pillow
+      try:
+        importlib.import_module('PIL')  # Try importing the PIL module
+      except ImportError:
+        missing.append((module, installCmd))  # Add missing module and installation command
     else:
       try:
         importlib.import_module(module)  # Try importing the Python module
