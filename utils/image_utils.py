@@ -38,7 +38,10 @@ def processImage(imagePath, outputFolder, movedFolder):
   filename = str(imagePath)
   filenameOut = os.path.join(outputFolder, f'{imagePath.stem}.webp')
 
+  logging.info(f"Starting image processing: {filename}")  # Log start of image processing
+
   if os.path.exists(filenameOut) or os.path.exists(os.path.join(movedFolder, os.path.basename(filename))):
+    logging.info(f"File conflict detected for: {filename}")  # Log file conflict
     handleFileConflict(filename, outputFolder, movedFolder)
 
   try:
@@ -46,9 +49,9 @@ def processImage(imagePath, outputFolder, movedFolder):
       ['cwebp', '-q', WEBP_QUALITY, filename, '-o', filenameOut],
       creationflags=CREATE_NO_WINDOW
     )
-    logging.info(f"Processed image: {filename} -> {filenameOut}")  # Log success
+    logging.info(f"Image successfully compressed: {filename} -> {filenameOut}")  # Log success
   except subprocess.CalledProcessError as e:
-    logging.error(f"Error converting image: {filename}: {e}")  # Log error
+    logging.error(f"Error compressing image: {filename}: {e}")  # Log error
     return
 
   if imagePath.suffix.lower() == '.png':
@@ -65,7 +68,7 @@ def processImage(imagePath, outputFolder, movedFolder):
 
         # Log metadata values for debugging if enabled
         if LOG_METADATA:
-          logging.info(f"Read metadata for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'")
+          logging.info(f"Metadata extracted for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'")
 
       subprocess.check_call(
         ['exiftool', '-overwrite_original', 
@@ -74,19 +77,19 @@ def processImage(imagePath, outputFolder, movedFolder):
          f'-Workflow={workflow}', 
          filenameOut],
         creationflags=CREATE_NO_WINDOW
-      )  # Add metadata to the compressed file
-    except subprocess.CalledProcessError as e:
-      logging.error(f"Error copying metadata to {filenameOut}: {e}")  # Log error
+      )
+      logging.info(f"Metadata successfully added to: {filenameOut}")  # Log metadata addition
     except Exception as e:
-      logging.error(f"Error processing PNG metadata for {filename}: {e}")  # Log error
-  
+      logging.error(f"Error processing metadata for {filename}: {e}")  # Log error
+
   try:
-    os.utime(filenameOut, (os.path.getmtime(filename), os.path.getmtime(filename)))  # Update timestamps
+    os.utime(filenameOut, (os.path.getmtime(filename), os.path.getmtime(filename)))
+    logging.info(f"Timestamps updated for: {filenameOut}")  # Log timestamp update
   except FileNotFoundError:
     logging.error(f"Error updating timestamps for {filenameOut}: File not found")  # Log error
-  
+
   if not os.path.exists(filenameOut):
-    logging.error(f"Failed to create compressed file for: {filename}")
+    logging.error(f"Failed to create compressed file for: {filename}")  # Log failure
     return
 
   originalSize = os.path.getsize(filename)
@@ -95,12 +98,12 @@ def processImage(imagePath, outputFolder, movedFolder):
   if compressedSize >= originalSize:
     os.remove(filenameOut)
     shutil.copy2(filename, filenameOut)
-    logging.info(f"Compressed file larger than original, kept original: {filename}")
+    logging.info(f"Compressed file larger than original, kept original: {filename}")  # Log decision
 
   if MOVE_ORIGINALS_TO_BACKUP:
     try:
       os.makedirs(movedFolder, exist_ok=True)
       shutil.move(filename, os.path.join(movedFolder, os.path.basename(filename)))
-      logging.info(f"Moved original image to backup: {filename}")
+      logging.info(f"Original image moved to backup: {filename}")  # Log backup move
     except Exception as e:
-      logging.error(f"Error moving original image to backup: {filename}: {e}")
+      logging.error(f"Error moving original image to backup: {filename}: {e}")  # Log error

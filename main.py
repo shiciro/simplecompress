@@ -82,12 +82,17 @@ def main():
   
   timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
   logging.info(f"[{timestamp}] --- Script Execution Started ---")  # Log start time
+  logging.info(f"Input folder: {inputPath}")  # Log input folder
+  logging.info(f"Output folder: {outputFolder}")  # Log output folder
+  logging.info(f"Backup folder: {movedFolder}")  # Log backup folder
+  logging.info(f"Unpaired folder: {unpairedFolder}")  # Log unpaired folder
   
   logConstants()  # Log and print constants at the start of the script
 
   files = [os.path.join(inputPath, file) for file in os.listdir(inputPath) if os.path.isfile(os.path.join(inputPath, file))]
   
   totalFiles = len(files)
+  logging.info(f"Total files to process: {totalFiles}")  # Log total file count
   progressBar = updateProgressBar(totalFiles, 'Processing Files')
   
   # Start the key listener thread
@@ -97,6 +102,7 @@ def main():
   with ThreadPoolExecutor() as executor:  # Use ThreadPoolExecutor for parallel processing
     for filePath in files:
       while isPaused:  # Pause processing if isPaused is True
+        logging.info("Processing paused by user.")  # Log pause action
         pass
       if isCancelled:  # Stop processing if isCancelled is True
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
@@ -104,6 +110,7 @@ def main():
         logging.info(f"[{timestamp}] Processing cancelled by user.")
         break
       if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):  # Check for image files
+        logging.info(f"Processing image file: {filePath}")  # Log image file being processed
         if USE_THREAD_POOL_FOR_IMAGES:  # Check if threading is enabled for images
           executor.submit(lambda p: (
             processImage(Path(p), outputFolder, movedFolder),  # Process the image
@@ -113,6 +120,7 @@ def main():
           processImage(Path(filePath), outputFolder, movedFolder)  # Process sequentially
           progressBar.update(1)  # Update the progress bar
       elif filePath.lower().endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')):  # Check for video files
+        logging.info(f"Processing video file: {filePath}")  # Log video file being processed
         if USE_THREAD_POOL_FOR_VIDEOS:  # Check if threading is enabled for videos
           executor.submit(lambda p: (
             processVideo(Path(p), outputFolder, movedFolder),  # Process the video
@@ -125,6 +133,7 @@ def main():
   progressBar.close()
   if not isCancelled:
     moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)
+    logging.info("Unpaired files moved successfully.")  # Log unpaired file movement
   
   timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
   logging.info(f"[{timestamp}] --- Script Execution Ended ---")  # Log end time
