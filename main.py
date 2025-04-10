@@ -16,7 +16,7 @@ from utils.image_utils import processImage
 from utils.file_utils import moveUnpairedFiles
 from utils.progress_utils import updateProgressBar
 from config import CRF_WEBM, WEBP_QUALITY, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW
-from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS  # Import new constants
+from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS, ENABLE_DEPENDENCY_CHECK  # Import ENABLE_DEPENDENCY_CHECK
 from utils.dependency_utils import checkDependencies  # Import the moved function
 
 # Configure logging
@@ -130,5 +130,6 @@ def main():
   logging.info(f"[{timestamp}] --- Script Execution Ended ---")  # Log end time
 
 if __name__ == '__main__':
-  #checkDependencies()
+  if ENABLE_DEPENDENCY_CHECK:  # Check if dependency check is enabled
+    checkDependencies()  # Call dependency check
   main()

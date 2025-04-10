@@ -13,6 +13,8 @@ WEBM_BITRATE = '1M'  # Bitrate for WebM compression
 USE_THREAD_POOL_FOR_IMAGES = True  # Toggle to use ThreadPoolExecutor for image processing
 USE_THREAD_POOL_FOR_VIDEOS = False  # Toggle to use ThreadPoolExecutor for video processing
 
+ENABLE_DEPENDENCY_CHECK = True  # Toggle to enable or disable dependency checks
+
 # Adjust creation flags based on the operating system and toggle
 import os
 CREATE_NO_WINDOW = 0x08000000 if HIDE_CMD_WINDOWS and os.name == 'nt' else 0
