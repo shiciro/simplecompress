@@ -1,1 +1,3 @@
-conversion_log.txt
+conversion_log.log
+*.log
+__pycache__/    

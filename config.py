@@ -3,7 +3,7 @@ CRF_WEBM = '47'  # Constant Rate Factor for WebM
 WEBP_QUALITY = '90'  # Quality for WebP compression
 HIDE_CMD_WINDOWS = False  # Toggle to hide or show command prompt windows
 MOVE_ORIGINALS_TO_BACKUP = True  # Flag to move original files to a backup folder after processing
-LOG_FILE = 'conversion_log.txt'  # Log file for recording operations
+LOG_FILE = 'conversion_log.log'  # Log file for recording operations
 LOG_METADATA = False  # Toggle to enable or disable metadata logging
 
 DEFAULT_SCALE_WIDTH = 640  # Default width for scaling videos
