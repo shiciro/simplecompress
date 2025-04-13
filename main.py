@@ -16,7 +16,7 @@ from utils.image_utils import processImage
 from utils.file_utils import moveUnpairedFiles
 from utils.progress_utils import updateProgressBar
 from config import CRF_WEBM, WEBP_QUALITY, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW
-from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS, ENABLE_DEPENDENCY_CHECK  # Import ENABLE_DEPENDENCY_CHECK
+from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS, ENABLE_DEPENDENCY_CHECK, ENABLE_KEYBOARD_CHECK  # Import ENABLE_KEYBOARD_CHECK
 from utils.dependency_utils import checkDependencies  # Import the moved function
 
 # Configure logging
@@ -32,19 +32,26 @@ isCancelled = False
 
 def keyListener():
   global isPaused, isCancelled
+  if not ENABLE_KEYBOARD_CHECK:  # Check if keyboard listener is enabled
+    logging.info('Keyboard listener is disabled.')  # Log that the listener is disabled
+    return
+  logging.info('Keyboard listener started.')  # Log that the listener is active
   while True:
     if keyboard.is_pressed('p'):  # Listen for 'p' to pause/resume
       isPaused = not isPaused
       print('\nProcessing paused. Press "p" again to resume.') if isPaused else print('\nProcessing resumed.')
+      logging.info('Processing paused.' if isPaused else 'Processing resumed.')  # Log pause/resume action
       while keyboard.is_pressed('p'):  # Wait for key release
         pass
     elif keyboard.is_pressed('c'):  # Listen for 'c' to cancel
       confirm = input('\nAre you sure you want to cancel? (y/n): ')
       if confirm.lower() == 'y':
         isCancelled = True
+        logging.info('Processing cancelled by user.')  # Log cancellation
         break
       else:
         print('Cancel aborted.')
+        logging.info('Cancel aborted by user.')  # Log cancel abort
     if isCancelled:
       break
 
@@ -57,7 +64,9 @@ def logConstants():
     'LOG_FILE': LOG_FILE,
     'CREATE_NO_WINDOW': CREATE_NO_WINDOW,
     'USE_THREAD_POOL_FOR_IMAGES': USE_THREAD_POOL_FOR_IMAGES,
-    'USE_THREAD_POOL_FOR_VIDEOS': USE_THREAD_POOL_FOR_VIDEOS
+    'USE_THREAD_POOL_FOR_VIDEOS': USE_THREAD_POOL_FOR_VIDEOS,
+    'ENABLE_DEPENDENCY_CHECK': ENABLE_DEPENDENCY_CHECK,
+    'ENABLE_KEYBOARD_CHECK': ENABLE_KEYBOARD_CHECK  # Log keyboard listener toggle
   }  # Define constants to log
 
   print('\nCurrent Constants:')
@@ -95,9 +104,10 @@ def main():
   logging.info(f"Total files to process: {totalFiles}")  # Log total file count
   progressBar = updateProgressBar(totalFiles, 'Processing Files')
   
-  # Start the key listener thread
-  listenerThread = threading.Thread(target=keyListener, daemon=True)
-  listenerThread.start()
+  # Start the key listener thread if enabled
+  if ENABLE_KEYBOARD_CHECK:
+    listenerThread = threading.Thread(target=keyListener, daemon=True)
+    listenerThread.start()
 
   with ThreadPoolExecutor() as executor:  # Use ThreadPoolExecutor for parallel processing
     for filePath in files:
