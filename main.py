@@ -16,7 +16,7 @@ from utils.image_utils import processImage
 from utils.file_utils import moveUnpairedFiles
 from utils.progress_utils import updateProgressBar
 from config import CRF_WEBM, WEBP_QUALITY, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW
-from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS, ENABLE_DEPENDENCY_CHECK, ENABLE_KEYBOARD_CHECK  # Import ENABLE_KEYBOARD_CHECK
+from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS, ENABLE_DEPENDENCY_CHECK,ENABLE_KEYBOARD_CHECK, LOG_METADATA  # Import ENABLE_DEPENDENCY_CHECK
 from utils.dependency_utils import checkDependencies  # Import the moved function
 
 # Configure logging
@@ -65,8 +65,7 @@ def logConstants():
     'CREATE_NO_WINDOW': CREATE_NO_WINDOW,
     'USE_THREAD_POOL_FOR_IMAGES': USE_THREAD_POOL_FOR_IMAGES,
     'USE_THREAD_POOL_FOR_VIDEOS': USE_THREAD_POOL_FOR_VIDEOS,
-    'ENABLE_DEPENDENCY_CHECK': ENABLE_DEPENDENCY_CHECK,
-    'ENABLE_KEYBOARD_CHECK': ENABLE_KEYBOARD_CHECK  # Log keyboard listener toggle
+    'LOG_METADATA': LOG_METADATA
   }  # Define constants to log
 
   print('\nCurrent Constants:')
