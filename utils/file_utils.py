@@ -21,20 +21,28 @@ def moveUnpairedFiles(folder1, folder2, outputFolder):
   for file in files1:
     baseName = os.path.splitext(file)[0]  # Get base name
     if baseName in unpairedInFolder1:
+      src = os.path.join(folder1, file)  # Source file path
+      dst = os.path.join(outputFolder, file)  # Destination file path
       try:
-        shutil.move(os.path.join(folder1, file), os.path.join(outputFolder, file))  # Move unpaired file from folder1
+        shutil.move(src, dst)  # Attempt to move the file
         logging.info(f"Moved unpaired file from {folder1} to {outputFolder}: {file}")  # Log success
-      except Exception as e:
-        logging.error(f"Error moving file {file} from {folder1} to {outputFolder}: {e}")  # Log error
-  
+      except OSError:
+        shutil.copy2(src, dst)  # Copy the file if move fails
+        os.remove(src)  # Delete the original file
+        logging.info(f"Copied and removed unpaired file from {folder1} to {outputFolder}: {file}")  # Log fallback
+
   for file in files2:
     baseName = os.path.splitext(file)[0]  # Get base name
     if baseName in unpairedInFolder2:
+      src = os.path.join(folder2, file)  # Source file path
+      dst = os.path.join(outputFolder, file)  # Destination file path
       try:
-        shutil.move(os.path.join(folder2, file), os.path.join(outputFolder, file))  # Move unpaired file from folder2
+        shutil.move(src, dst)  # Attempt to move the file
         logging.info(f"Moved unpaired file from {folder2} to {outputFolder}: {file}")  # Log success
-      except Exception as e:
-        logging.error(f"Error moving file {file} from {folder2} to {outputFolder}: {e}")  # Log error
+      except OSError:
+        shutil.copy2(src, dst)  # Copy the file if move fails
+        os.remove(src)  # Delete the original file
+        logging.info(f"Copied and removed unpaired file from {folder2} to {outputFolder}: {file}")  # Log fallback
 
   logging.info(f"Unpaired files have been successfully moved to: {outputFolder}")  # Print completion message
 
