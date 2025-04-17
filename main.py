@@ -2,7 +2,6 @@ import os
 import sys
 import shutil
 import threading  # Import threading for key listener
-import keyboard  # Import keyboard module for key press detection
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
@@ -16,7 +15,7 @@ from utils.image_utils import processImage
 from utils.file_utils import moveUnpairedFiles
 from utils.progress_utils import updateProgressBar
 from config import CRF_WEBM, WEBP_QUALITY, HIDE_CMD_WINDOWS, MOVE_ORIGINALS_TO_BACKUP, LOG_FILE, CREATE_NO_WINDOW
-from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS, ENABLE_DEPENDENCY_CHECK,ENABLE_KEYBOARD_CHECK, LOG_METADATA  # Import ENABLE_DEPENDENCY_CHECK
+from config import USE_THREAD_POOL_FOR_IMAGES, USE_THREAD_POOL_FOR_VIDEOS, ENABLE_DEPENDENCY_CHECK, LOG_METADATA  # Removed ENABLE_KEYBOARD_CHECK
 from utils.dependency_utils import checkDependencies  # Import the moved function
 
 # Configure logging
@@ -25,35 +24,6 @@ logging.basicConfig(
   level=logging.INFO,  # Set default log level to INFO
   format='%(asctime)s - %(levelname)s - %(message)s'  # Log format with timestamp, level, and message
 )
-
-# Global flags for pause and cancel
-isPaused = False
-isCancelled = False
-
-def keyListener():
-  global isPaused, isCancelled
-  if not ENABLE_KEYBOARD_CHECK:  # Check if keyboard listener is enabled
-    logging.info('Keyboard listener is disabled.')  # Log that the listener is disabled
-    return
-  logging.info('Keyboard listener started.')  # Log that the listener is active
-  while True:
-    if keyboard.is_pressed('p'):  # Listen for 'p' to pause/resume
-      isPaused = not isPaused
-      print('\nProcessing paused. Press "p" again to resume.') if isPaused else print('\nProcessing resumed.')
-      logging.info('Processing paused.' if isPaused else 'Processing resumed.')  # Log pause/resume action
-      while keyboard.is_pressed('p'):  # Wait for key release
-        pass
-    elif keyboard.is_pressed('c'):  # Listen for 'c' to cancel
-      confirm = input('\nAre you sure you want to cancel? (y/n): ')
-      if confirm.lower() == 'y':
-        isCancelled = True
-        logging.info('Processing cancelled by user.')  # Log cancellation
-        break
-      else:
-        print('Cancel aborted.')
-        logging.info('Cancel aborted by user.')  # Log cancel abort
-    if isCancelled:
-      break
 
 def logConstants():
   constants = {
@@ -66,9 +36,8 @@ def logConstants():
     'CREATE_NO_WINDOW': CREATE_NO_WINDOW,
     'USE_THREAD_POOL_FOR_IMAGES': USE_THREAD_POOL_FOR_IMAGES,
     'USE_THREAD_POOL_FOR_VIDEOS': USE_THREAD_POOL_FOR_VIDEOS,
-    'ENABLE_DEPENDENCY_CHECK': ENABLE_DEPENDENCY_CHECK,
-    'ENABLE_KEYBOARD_CHECK': ENABLE_KEYBOARD_CHECK
-  }  # Define constants to log
+    'ENABLE_DEPENDENCY_CHECK': ENABLE_DEPENDENCY_CHECK
+  }  # Removed ENABLE_KEYBOARD_CHECK
 
   print('\nCurrent Constants:')
   logging.info('Current Constants:')
@@ -77,7 +46,6 @@ def logConstants():
     logging.info(f'{key}: {value}')  # Log constant name and value
 
 def main():
-  global isPaused, isCancelled
   clearConsole()
   inputPath = input('Enter the directory path: ')
   inputFolderName = os.path.basename(os.path.normpath(inputPath))
@@ -104,22 +72,9 @@ def main():
   totalFiles = len(files)
   logging.info(f"Total files to process: {totalFiles}")  # Log total file count
   progressBar = updateProgressBar(totalFiles, 'Processing Files')
-  
-  # Start the key listener thread if enabled
-  if ENABLE_KEYBOARD_CHECK:
-    listenerThread = threading.Thread(target=keyListener, daemon=True)
-    listenerThread.start()
 
   with ThreadPoolExecutor() as executor:  # Use ThreadPoolExecutor for parallel processing
     for filePath in files:
-      while isPaused:  # Pause processing if isPaused is True
-        logging.info("Processing paused by user.")  # Log pause action
-        pass
-      if isCancelled:  # Stop processing if isCancelled is True
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-        print(f'\n[{timestamp}] Processing cancelled by user.')  # Print with timestamp
-        logging.info(f"[{timestamp}] Processing cancelled by user.")
-        break
       if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):  # Check for image files
         logging.info(f"Processing image file: {filePath}")  # Log image file being processed
         if USE_THREAD_POOL_FOR_IMAGES:  # Check if threading is enabled for images
@@ -142,9 +97,8 @@ def main():
           progressBar.update(1)  # Update the progress bar
   
   progressBar.close()
-  if not isCancelled:
-    moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)
-    logging.info("Unpaired files moved successfully.")  # Log unpaired file movement
+  moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)
+  logging.info("Unpaired files moved successfully.")  # Log unpaired file movement
   
   timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
   logging.info(f"[{timestamp}] --- Script Execution Ended ---")  # Log end time

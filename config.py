@@ -14,7 +14,6 @@ USE_THREAD_POOL_FOR_IMAGES = True  # Toggle to use ThreadPoolExecutor for image 
 USE_THREAD_POOL_FOR_VIDEOS = False  # Toggle to use ThreadPoolExecutor for video processing
 
 ENABLE_DEPENDENCY_CHECK = True  # Toggle to enable or disable dependency checks
-ENABLE_KEYBOARD_CHECK = False  # Toggle to enable or disable keyboard listener
 
 # Adjust creation flags based on the operating system and toggle
 import os
