@@ -65,6 +65,13 @@ def processVideo(videoPath, outputFolder, movedFolder):
   if compressedSize >= originalSize:  # Check if the compressed file is larger
     os.remove(filenameOut)  # Delete the compressed file
     shutil.copy(filename, filenameOut)  # Copy original to output folder
+    try:
+      original_atime = os.path.getatime(filename)
+      original_mtime = os.path.getmtime(filename)
+      os.utime(filenameOut, (original_atime, original_mtime))  # Update timestamps for the copied file
+      logging.info(f"Timestamps updated for copied file: {filenameOut}")  # Log timestamp update
+    except Exception as e:
+      logging.error(f"Error updating timestamps for copied file {filenameOut}: {e}")  # Log error
     logging.info(f"Compressed video larger than original, kept original: {filename}")  # Log decision
   else:
     logging.info(f"Compressed video is smaller, kept compressed: {filename}")  # Log decision
