@@ -49,9 +49,12 @@ def processVideo(videoPath, outputFolder, movedFolder):
 
     # Set the modified date of the compressed file to match the original
     try:
-      os.utime(filenameOut, (os.path.getatime(filename), os.path.getmtime(filename)))  # Update timestamps
-    except FileNotFoundError:
-      logging.error(f"Error updating timestamps for {filenameOut}: File not found")  # Log error
+      original_atime = os.path.getatime(filename)
+      original_mtime = os.path.getmtime(filename)
+      os.utime(filenameOut, (original_atime, original_mtime))  # Update timestamps
+      logging.info(f"Timestamps updated for: {filenameOut}")  # Log timestamp update
+    except Exception as e:
+      logging.error(f"Error updating timestamps for {filenameOut}: {e}")  # Log error
   except subprocess.CalledProcessError as e:
     logging.error(f"Error compressing video: {filename}: {e}")  # Log error
     return
