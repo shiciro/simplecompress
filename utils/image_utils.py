@@ -96,8 +96,15 @@ def processImage(imagePath, outputFolder, movedFolder):
   compressedSize = os.path.getsize(filenameOut)
 
   if compressedSize >= originalSize:
-    os.remove(filenameOut)
-    shutil.copy2(filename, filenameOut)
+    os.remove(filenameOut)  # Delete the compressed file
+    shutil.copy2(filename, filenameOut)  # Copy original to output folder
+    try:
+      original_atime = os.path.getatime(filename)
+      original_mtime = os.path.getmtime(filename)
+      os.utime(filenameOut, (original_atime, original_mtime))  # Update timestamps for the copied file
+      logging.info(f"Timestamps updated for copied file: {filenameOut}")  # Log timestamp update
+    except Exception as e:
+      logging.error(f"Error updating timestamps for copied file {filenameOut}: {e}")  # Log error
     logging.info(f"Compressed file larger than original, kept original: {filename}")  # Log decision
 
   if MOVE_ORIGINALS_TO_BACKUP:
