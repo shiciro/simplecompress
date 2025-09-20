@@ -15,27 +15,30 @@ def getVideoDimensions(videoPath):
   try:
     result = subprocess.run(
       ['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=s=x:p=0', videoPath],
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=CREATE_NO_WINDOW
-    )  # Run ffprobe to get video dimensions
-    output = result.stdout.strip()  # Trim the output
-    dimensions = output.split('x')  # Split dimensions
+      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, creationflags=CREATE_NO_WINDOW
+    )
+    output = result.stdout.strip()
+    dimensions = output.split('x')
     if len(dimensions) >= 2:
-      return map(int, dimensions[:2])  # Return width and height as integers
+      return map(int, dimensions[:2])
   except Exception as e:
-    logging.error(f"Error getting dimensions for {videoPath}: {e}")  # Log error
-  return None, None  # Return None if dimensions cannot be retrieved
+    logging.error(f"Error getting dimensions for {videoPath}: {e}")
+  return None, None
 
 def processVideo(videoPath, outputFolder, movedFolder):
-  filename = str(videoPath)  # Convert Path object to string
-  filenameOut = os.path.join(outputFolder, f'{videoPath.stem}.webm')  # Output file path
+  filename = str(videoPath)
+  filenameOut = os.path.join(outputFolder, f'{videoPath.stem}.webm')
+  messages = []
+  status = 'success'
 
-  width, height = getVideoDimensions(filename)  # Get video dimensions
+  width, height = getVideoDimensions(filename)
   if width is None or height is None:
-    logging.error(f"Error getting dimensions for video: {filename}")  # Log error
-    return
-  
-  scale = f'{DEFAULT_SCALE_WIDTH}:-2' if width > height else f'-2:{DEFAULT_SCALE_HEIGHT}'  # Determine scale parameters
-  
+    status = 'error'
+    messages.append(f"Error getting dimensions for video: {filename}")
+    return {'status': status, 'messages': messages, 'file': filename}
+
+  scale = f'{DEFAULT_SCALE_WIDTH}:-2' if width > height else f'-2:{DEFAULT_SCALE_HEIGHT}'
+
   try:
     subprocess.check_call(
       [
@@ -43,40 +46,50 @@ def processVideo(videoPath, outputFolder, movedFolder):
         '-c:v', V_CODEC_WEBM, '-crf', CRF_WEBM, '-b:v', WEBM_BITRATE, '-c:a', A_CODEC_WEBM,
         filenameOut
       ],
-      creationflags=CREATE_NO_WINDOW
-    )  # Convert to WebM
-    logging.info(f"Processed video: {filename} -> {filenameOut}")  # Log success
+      creationflags=CREATE_NO_WINDOW,
+      stdout=subprocess.DEVNULL,
+      stderr=subprocess.DEVNULL
+    )
+    messages.append(f"Processed video: {filename} -> {filenameOut}")
 
-    # Set the modified date of the compressed file to match the original
     try:
       original_atime = os.path.getatime(filename)
       original_mtime = os.path.getmtime(filename)
-      os.utime(filenameOut, (original_atime, original_mtime))  # Update timestamps
-      logging.info(f"Timestamps updated for: {filenameOut}")  # Log timestamp update
+      os.utime(filenameOut, (original_atime, original_mtime))
+      messages.append(f"Timestamps updated for: {filenameOut}")
     except Exception as e:
-      logging.error(f"Error updating timestamps for {filenameOut}: {e}")  # Log error
+      status = 'error'
+      messages.append(f"Error updating timestamps for {filenameOut}: {e}")
   except subprocess.CalledProcessError as e:
-    logging.error(f"Error compressing video: {filename}: {e}")  # Log error
-    return
-  
-  originalSize = os.path.getsize(filename)  # Get original file size
-  compressedSize = os.path.getsize(filenameOut)  # Get compressed file size
-  
-  if compressedSize >= originalSize:  # Check if the compressed file is larger
-    os.remove(filenameOut)  # Delete the compressed file
-    shutil.copy(filename, filenameOut)  # Copy original to output folder
+    status = 'error'
+    messages.append(f"Error compressing video: {filename}: {e}")
+    return {'status': status, 'messages': messages, 'file': filename}
+
+  originalSize = os.path.getsize(filename)
+  compressedSize = os.path.getsize(filenameOut)
+
+  if compressedSize >= originalSize:
+    os.remove(filenameOut)
+    shutil.copy(filename, filenameOut)
     try:
       original_atime = os.path.getatime(filename)
       original_mtime = os.path.getmtime(filename)
-      os.utime(filenameOut, (original_atime, original_mtime))  # Update timestamps for the copied file
-      logging.info(f"Timestamps updated for copied file: {filenameOut}")  # Log timestamp update
+      os.utime(filenameOut, (original_atime, original_mtime))
+      messages.append(f"Timestamps updated for copied file: {filenameOut}")
     except Exception as e:
-      logging.error(f"Error updating timestamps for copied file {filenameOut}: {e}")  # Log error
-    logging.info(f"Compressed video larger than original, kept original: {filename}")  # Log decision
+      status = 'error'
+      messages.append(f"Error updating timestamps for copied file {filenameOut}: {e}")
+    messages.append(f"Compressed video larger than original, kept original: {filename}")
   else:
-    logging.info(f"Compressed video is smaller, kept compressed: {filename}")  # Log decision
+    messages.append(f"Compressed video is smaller, kept compressed: {filename}")
 
-  if MOVE_ORIGINALS_TO_BACKUP:  # Check if originals should be moved
-    os.makedirs(movedFolder, exist_ok=True)  # Ensure the backup folder exists
-    shutil.move(filename, movedFolder)  # Move original to backup folder
-    logging.info(f"Moved original video to backup: {filename}")  # Log move
+  if MOVE_ORIGINALS_TO_BACKUP:
+    try:
+      os.makedirs(movedFolder, exist_ok=True)
+      shutil.move(filename, movedFolder)
+      messages.append(f"Moved original video to backup: {filename}")
+    except Exception as e:
+      status = 'error'
+      messages.append(f"Error moving original video to backup: {filename}: {e}")
+
+  return {'status': status, 'messages': messages, 'file': filename}

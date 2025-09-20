@@ -46,62 +46,104 @@ def logConstants():
     logging.info(f'{key}: {value}')  # Log constant name and value
 
 def main():
-  clearConsole()
-  inputPath = input('Enter the directory path: ')
-  inputFolderName = os.path.basename(os.path.normpath(inputPath))
-  
-  outputFolder = os.path.join(inputPath, f'{inputFolderName}_compressed')
-  movedFolder = os.path.join(inputPath, f'{inputFolderName}_originals_backup')
-  unpairedFolder = os.path.join(inputPath, f'{inputFolderName}_unpaired')
-  
-  os.makedirs(outputFolder, exist_ok=True)
-  os.makedirs(movedFolder, exist_ok=True)
-  os.makedirs(unpairedFolder, exist_ok=True)
-  
+  clearConsole()  # Clear the console
+  inputPath = input('Enter the directory path: ')  # Get input path from user
+
   timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
   logging.info(f"[{timestamp}] --- Script Execution Started ---")  # Log start time
   logging.info(f"Input folder: {inputPath}")  # Log input folder
-  logging.info(f"Output folder: {outputFolder}")  # Log output folder
-  logging.info(f"Backup folder: {movedFolder}")  # Log backup folder
-  logging.info(f"Unpaired folder: {unpairedFolder}")  # Log unpaired folder
-  
+
   logConstants()  # Log and print constants at the start of the script
 
-  files = [os.path.join(inputPath, file) for file in os.listdir(inputPath) if os.path.isfile(os.path.join(inputPath, file))]
-  
-  totalFiles = len(files)
-  logging.info(f"Total files to process: {totalFiles}")  # Log total file count
-  progressBar = updateProgressBar(totalFiles, 'Processing Files')
+  filesToProcess = []  # List to collect (filePath, outputFolder, movedFolder, unpairedFolder)
 
-  with ThreadPoolExecutor() as executor:  # Use ThreadPoolExecutor for parallel processing
-    for filePath in files:
-      if filePath.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):  # Check for image files
-        logging.info(f"Processing image file: {filePath}")  # Log image file being processed
-        if USE_THREAD_POOL_FOR_IMAGES:  # Check if threading is enabled for images
-          executor.submit(lambda p: (
-            processImage(Path(p), outputFolder, movedFolder),  # Process the image
-            progressBar.update(1)  # Update the progress bar
-          ), filePath)
+  # Walk through all subdirectories, skipping ignored folders
+  for root, dirs, filenames in os.walk(inputPath):
+    folderName = os.path.basename(os.path.normpath(root))  # Get current folder name
+
+    # Define output, backup, and unpaired folders for this subfolder
+    outputFolder = os.path.join(root, f'{folderName}_compressed')
+    movedFolder = os.path.join(root, f'{folderName}_originals_backup')
+    unpairedFolder = os.path.join(root, f'{folderName}_unpaired')
+
+    # Ignore traversing into any of these folders
+    ignoreFolders = {
+      os.path.basename(outputFolder),
+      os.path.basename(movedFolder),
+      os.path.basename(unpairedFolder)
+    }
+    dirs[:] = [d for d in dirs if d not in ignoreFolders]
+
+    filesInThisFolder = []  # Collect files for this folder
+
+    for file in filenames:
+      filePath = os.path.join(root, file)
+      # Skip files inside any of the special folders
+      if any(filePath.startswith(os.path.join(root, f'{folderName}_{suffix}')) for suffix in ['compressed', 'originals_backup', 'unpaired']):
+        continue
+      filesInThisFolder.append((filePath, outputFolder, movedFolder, unpairedFolder))
+
+    if filesInThisFolder:  # Only create folders if there are files to process
+      os.makedirs(outputFolder, exist_ok=True)
+      os.makedirs(movedFolder, exist_ok=True)
+      os.makedirs(unpairedFolder, exist_ok=True)
+      filesToProcess.extend(filesInThisFolder)
+
+  totalFiles = len(filesToProcess)  # Count total files
+  logging.info(f"Total files to process: {totalFiles}")  # Log total file count
+
+
+  from concurrent.futures import as_completed
+  progressBar = tqdm(total=totalFiles, desc='Processing Files', ncols=80)
+  futures = []
+  results = []
+
+  with ThreadPoolExecutor() as executor:
+    for filePath, outputFolder, movedFolder, unpairedFolder in filesToProcess:
+      ext = filePath.lower()
+      if ext.endswith(('.jpg', '.jpeg', '.png', '.webp')) and USE_THREAD_POOL_FOR_IMAGES:
+        futures.append(executor.submit(processImage, Path(filePath), outputFolder, movedFolder))
+      elif ext.endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')) and USE_THREAD_POOL_FOR_VIDEOS:
+        futures.append(executor.submit(processVideo, Path(filePath), outputFolder, movedFolder))
+      else:
+        # Process in main thread if not using thread pool
+        if ext.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+          result = processImage(Path(filePath), outputFolder, movedFolder)
+        elif ext.endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')):
+          result = processVideo(Path(filePath), outputFolder, movedFolder)
         else:
-          processImage(Path(filePath), outputFolder, movedFolder)  # Process sequentially
-          progressBar.update(1)  # Update the progress bar
-      elif filePath.lower().endswith(('.mp4', '.mov', '.avi', '.webm', '.m4v')):  # Check for video files
-        logging.info(f"Processing video file: {filePath}")  # Log video file being processed
-        if USE_THREAD_POOL_FOR_VIDEOS:  # Check if threading is enabled for videos
-          executor.submit(lambda p: (
-            processVideo(Path(p), outputFolder, movedFolder),  # Process the video
-            progressBar.update(1)  # Update the progress bar
-          ), filePath)
-        else:
-          processVideo(Path(filePath), outputFolder, movedFolder)  # Process sequentially
-          progressBar.update(1)  # Update the progress bar
-  
+          result = None
+        if result:
+          results.append(result)
+        progressBar.update(1)
+
+    for future in as_completed(futures):
+      result = future.result()
+      if result:
+        results.append(result)
+      progressBar.update(1)
+
   progressBar.close()
-  moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)
-  logging.info("Unpaired files moved successfully.")  # Log unpaired file movement
-  
-  timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
-  logging.info(f"[{timestamp}] --- Script Execution Ended ---")  # Log end time
+
+  # Centralized logging/output for all results (use tqdm.write to keep progress bar at bottom)
+  for result in results:
+    for msg in result.get('messages', []):
+      if result['status'] == 'error':
+        tqdm.write(f'[ERROR] {msg}')
+        logging.error(msg)
+      else:
+        tqdm.write(msg)
+        logging.info(msg)
+
+  # Move unpaired files for each unique subfolder after processing
+  uniqueFolders = set((outputFolder, movedFolder, unpairedFolder) for _, outputFolder, movedFolder, unpairedFolder in filesToProcess)  # Deduplicate folder triplets
+  for outputFolder, movedFolder, unpairedFolder in uniqueFolders:
+    moveUnpairedFiles(outputFolder, movedFolder, unpairedFolder)  # Move unpaired files for this subfolder
+
+  logging.info('Processing complete.')
+
+  timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+  logging.info(f'[{timestamp}] --- Script Execution Ended ---')
 
 if __name__ == '__main__':
   if ENABLE_DEPENDENCY_CHECK:  # Check if dependency check is enabled

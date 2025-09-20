@@ -37,38 +37,39 @@ def handleFileConflict(filePath, outputFolder, movedFolder):
 def processImage(imagePath, outputFolder, movedFolder):
   filename = str(imagePath)
   filenameOut = os.path.join(outputFolder, f'{imagePath.stem}.webp')
-
-  logging.info(f"Starting image processing: {filename}")  # Log start of image processing
+  messages = []
+  status = 'success'
 
   if os.path.exists(filenameOut) or os.path.exists(os.path.join(movedFolder, os.path.basename(filename))):
-    logging.info(f"File conflict detected for: {filename}")  # Log file conflict
     handleFileConflict(filename, outputFolder, movedFolder)
+    messages.append(f"File conflict detected for: {filename}")
 
   try:
     subprocess.check_call(
       ['cwebp', '-q', WEBP_QUALITY, filename, '-o', filenameOut],
-      creationflags=CREATE_NO_WINDOW
+      creationflags=CREATE_NO_WINDOW,
+      stdout=subprocess.DEVNULL,
+      stderr=subprocess.DEVNULL
     )
-    logging.info(f"Image successfully compressed: {filename} -> {filenameOut}")  # Log success
+    messages.append(f"Image successfully compressed: {filename} -> {filenameOut}")
   except subprocess.CalledProcessError as e:
-    logging.error(f"Error compressing image: {filename}: {e}")  # Log error
-    return
+    status = 'error'
+    messages.append(f"Error compressing image: {filename}: {e}")
+    return {'status': status, 'messages': messages, 'file': filename}
 
   if imagePath.suffix.lower() == '.png':
     try:
-      with Image.open(filename) as im:  # Ensure the Image object is properly closed
-        userComment = im.info.get('parameters', '')  # Extract metadata
-        prompt = im.info.get('prompt', '')  # Extract 'prompt' metadata
-        workflow = im.info.get('workflow', '')  # Extract 'workflow' metadata
+      with Image.open(filename) as im:
+        userComment = im.info.get('parameters', '')
+        prompt = im.info.get('prompt', '')
+        workflow = im.info.get('workflow', '')
 
-        # Ensure metadata fields are properly formatted for exiftool
-        userComment = userComment.replace('"', '\\"')  # Escape double quotes
-        prompt = prompt.replace('"', '\\"')  # Escape double quotes
-        workflow = workflow.replace('"', '\\"')  # Escape double quotes
+        userComment = userComment.replace('"', '\\"')
+        prompt = prompt.replace('"', '\\"')
+        workflow = workflow.replace('"', '\\"')
 
-        # Log metadata values for debugging if enabled
         if LOG_METADATA:
-          logging.info(f"Metadata extracted for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'")
+          messages.append(f"Metadata extracted for {filename}: parameters='{userComment}', prompt='{prompt}', workflow='{workflow}'")
 
       subprocess.check_call(
         ['exiftool', '-overwrite_original', 
@@ -76,41 +77,50 @@ def processImage(imagePath, outputFolder, movedFolder):
          f'-Prompt={prompt}', 
          f'-Workflow={workflow}', 
          filenameOut],
-        creationflags=CREATE_NO_WINDOW
+        creationflags=CREATE_NO_WINDOW,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
       )
-      logging.info(f"Metadata successfully added to: {filenameOut}")  # Log metadata addition
+      messages.append(f"Metadata successfully added to: {filenameOut}")
     except Exception as e:
-      logging.error(f"Error processing metadata for {filename}: {e}")  # Log error
+      status = 'error'
+      messages.append(f"Error processing metadata for {filename}: {e}")
 
   try:
     os.utime(filenameOut, (os.path.getmtime(filename), os.path.getmtime(filename)))
-    logging.info(f"Timestamps updated for: {filenameOut}")  # Log timestamp update
+    messages.append(f"Timestamps updated for: {filenameOut}")
   except FileNotFoundError:
-    logging.error(f"Error updating timestamps for {filenameOut}: File not found")  # Log error
+    status = 'error'
+    messages.append(f"Error updating timestamps for {filenameOut}: File not found")
 
   if not os.path.exists(filenameOut):
-    logging.error(f"Failed to create compressed file for: {filename}")  # Log failure
-    return
+    status = 'error'
+    messages.append(f"Failed to create compressed file for: {filename}")
+    return {'status': status, 'messages': messages, 'file': filename}
 
   originalSize = os.path.getsize(filename)
   compressedSize = os.path.getsize(filenameOut)
 
   if compressedSize >= originalSize:
-    os.remove(filenameOut)  # Delete the compressed file
-    shutil.copy2(filename, filenameOut)  # Copy original to output folder
+    os.remove(filenameOut)
+    shutil.copy2(filename, filenameOut)
     try:
       original_atime = os.path.getatime(filename)
       original_mtime = os.path.getmtime(filename)
-      os.utime(filenameOut, (original_atime, original_mtime))  # Update timestamps for the copied file
-      logging.info(f"Timestamps updated for copied file: {filenameOut}")  # Log timestamp update
+      os.utime(filenameOut, (original_atime, original_mtime))
+      messages.append(f"Timestamps updated for copied file: {filenameOut}")
     except Exception as e:
-      logging.error(f"Error updating timestamps for copied file {filenameOut}: {e}")  # Log error
-    logging.info(f"Compressed file larger than original, kept original: {filename}")  # Log decision
+      status = 'error'
+      messages.append(f"Error updating timestamps for copied file {filenameOut}: {e}")
+    messages.append(f"Compressed file larger than original, kept original: {filename}")
 
   if MOVE_ORIGINALS_TO_BACKUP:
     try:
       os.makedirs(movedFolder, exist_ok=True)
       shutil.move(filename, os.path.join(movedFolder, os.path.basename(filename)))
-      logging.info(f"Original image moved to backup: {filename}")  # Log backup move
+      messages.append(f"Original image moved to backup: {filename}")
     except Exception as e:
-      logging.error(f"Error moving original image to backup: {filename}: {e}")  # Log error
+      status = 'error'
+      messages.append(f"Error moving original image to backup: {filename}: {e}")
+
+  return {'status': status, 'messages': messages, 'file': filename}
